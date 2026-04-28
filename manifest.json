@@ -1,6 +1,7 @@
 {
   "name": "Glass Timer",
   "short_name": "Timer",
+  "description": "A beautiful timer with hours, markers, countdown/up, and color flashes.",
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#0a0f2a",

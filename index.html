@@ -6,25 +6,26 @@
     <title>Glass Timer</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="data:,">
     <meta name="theme-color" content="#0a0f2a">
+    <link rel="icon" href="data:,">
 </head>
 <body>
-    <!-- Floating help button (top-right corner) -->
+    <!-- Floating help button -->
     <button id="helpBtn" class="help-corner" title="User Guide">❓</button>
 
+    <!-- Timer display with separate parts -->
     <div class="timer">
-    <span class="timer-hours">00</span>
-    <span class="timer-colon">:</span>
-    <span class="timer-minutes">00</span>
-    <span class="timer-colon">:</span>
-    <span class="timer-seconds">00</span>
-</div>
-<div class="timer-units">
-    <span class="unit hours-unit">HOURS</span>
-    <span class="unit minutes-unit">MINUTES</span>
-    <span class="unit seconds-unit">SECONDS</span>
-</div>
+        <span class="timer-hours">00</span>
+        <span class="timer-colon">:</span>
+        <span class="timer-minutes">00</span>
+        <span class="timer-colon">:</span>
+        <span class="timer-seconds">00</span>
+    </div>
+    <div class="timer-units">
+        <span class="unit hours-unit">HOURS</span>
+        <span class="unit minutes-unit">MINUTES</span>
+        <span class="unit seconds-unit">SECONDS</span>
+    </div>
 
     <!-- Marker lists -->
     <div id="markerList" class="marker-list"></div>
@@ -39,26 +40,28 @@
         <button id="startBtn">▶ Start</button>
         <button id="pauseBtn">⏸ Pause</button>
         <button id="resetBtn">🔄 Reset</button>
-
         <button id="setMarkerBtn">🚩 Set Marker</button>
         <button id="clearMarkersBtn">🗑️ Clear All Markers</button>
     </div>
 
-    <!-- Set Time Modal -->
-    <div class="time-input-group">
-    <div class="input-unit">
-        <input type="number" id="modalHours" placeholder="Hours" min="0" value="0" step="1">
-        <span>hours</span>
-    </div>
-    <div class="input-unit">
-        <input type="number" id="modalMinutes" placeholder="Minutes" min="0" value="1" step="1">
-        <span>minutes</span>
-    </div>
-    <div class="input-unit">
-        <input type="number" id="modalSeconds" placeholder="Seconds" min="0" max="59" value="0" step="1">
-        <span>seconds</span>
-    </div>
-</div>
+    <!-- Set Time Modal (only one input group) -->
+    <div id="timeModal" class="modal">
+        <div class="modal-content">
+            <h3>Set Timer</h3>
+            <div class="time-input-group">
+                <div class="input-unit">
+                    <input type="number" id="modalHours" placeholder="Hours" min="0" value="0" step="1">
+                    <span>hours</span>
+                </div>
+                <div class="input-unit">
+                    <input type="number" id="modalMinutes" placeholder="Minutes" min="0" value="1" step="1">
+                    <span>minutes</span>
+                </div>
+                <div class="input-unit">
+                    <input type="number" id="modalSeconds" placeholder="Seconds" min="0" max="59" value="0" step="1">
+                    <span>seconds</span>
+                </div>
+            </div>
             <div class="modal-buttons">
                 <button id="modalConfirmBtn">Set Timer</button>
                 <button id="modalCancelBtn">Cancel</button>
@@ -66,25 +69,23 @@
         </div>
     </div>
 
-    <!-- Set Marker Modal -->
+    <!-- Set Marker Modal (only one input group) -->
     <div id="markerModal" class="modal">
         <div class="modal-content">
             <h3>Add Marker (notify at this time)</h3>
             <div class="time-input-group">
-    <div class="input-unit">
-        <input type="number" id="markerHours" placeholder="Hours" min="0" value="0" step="1">
-        <span>hours</span>
-    </div>
-    <div class="input-unit">
-        <input type="number" id="markerMinutes" placeholder="Minutes" min="0" value="0" step="1">
-        <span>minutes</span>
-    </div>
-    <div class="input-unit">
-        <input type="number" id="markerSeconds" placeholder="Seconds" min="0" max="59" value="0" step="1">
-        <span>seconds</span>
-    </div>
-</div>
-        
+                <div class="input-unit">
+                    <input type="number" id="markerHours" placeholder="Hours" min="0" value="0" step="1">
+                    <span>hours</span>
+                </div>
+                <div class="input-unit">
+                    <input type="number" id="markerMinutes" placeholder="Minutes" min="0" value="0" step="1">
+                    <span>minutes</span>
+                </div>
+                <div class="input-unit">
+                    <input type="number" id="markerSeconds" placeholder="Seconds" min="0" max="59" value="0" step="1">
+                    <span>seconds</span>
+                </div>
             </div>
             <div class="modal-buttons">
                 <button id="markerConfirmBtn">Add Marker</button>
@@ -93,12 +94,12 @@
         </div>
     </div>
 
-    <!-- Help Modal (User Guide) -->
+    <!-- Help Modal -->
     <div id="helpModal" class="modal">
         <div class="modal-content" style="max-width: 500px; text-align: left;">
             <h3 style="text-align: center;">📖 Timer User Guide</h3>
             <ul style="line-height: 1.6; padding-left: 20px;">
-                <li><strong>⏱️ Set Time</strong> – minutes & seconds for countdown or count‑up.</li>
+                <li><strong>⏱️ Set Time</strong> – hours, minutes & seconds for countdown or count‑up.</li>
                 <li><strong>⬇️/⬆️ Count Down/Up</strong> – toggle between counting down to zero or up to a target.</li>
                 <li><strong>▶ Start / ⏸ Pause</strong> – starts or pauses the timer.</li>
                 <li><strong>🔄 Reset</strong> – restarts the timer to the last set duration.</li>
@@ -112,16 +113,15 @@
         </div>
     </div>
 
-    <!-- Simple beep sound (no external file needed) -->
-    <audio id="alarmSound" preload="auto"></audio>
-
-    <script src="script.js" defer></script>
+    <script src="script.js"></script>
     <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-      .then(reg => console.log('✅ Service Worker registered', reg))
-      .catch(err => console.log('❌ SW registration failed', err));
-  }
-</script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('✅ SW registered', reg))
+                    .catch(err => console.log('❌ SW failed', err));
+            });
+        }
+    </script>
 </body>
 </html>

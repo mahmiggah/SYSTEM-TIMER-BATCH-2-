@@ -2,18 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glass Timer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Glass Timer – Standalone App</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0a0f2a">
     <link rel="icon" href="data:,">
 </head>
 <body>
-    <!-- Floating help button -->
     <button id="helpBtn" class="help-corner" title="User Guide">❓</button>
 
-    <!-- Timer display with separate parts -->
     <div class="timer">
         <span class="timer-hours">00</span>
         <span class="timer-colon">:</span>
@@ -27,13 +25,11 @@
         <span class="unit seconds-unit">SECONDS</span>
     </div>
 
-    <!-- Marker lists -->
     <div id="markerList" class="marker-list"></div>
     <div class="section-label">✅ Already reached:</div>
     <div id="reachedMarkers" class="reached-markers"></div>
     <div id="markerIndicator" class="marker-indicator" style="display: none;">❗ Marker reached!</div>
 
-    <!-- Controls -->
     <div class="controls">
         <button id="setTimeBtn">⏱️ Set Time</button>
         <button id="modeToggleBtn">⬇️ Count Down</button>
@@ -44,53 +40,29 @@
         <button id="clearMarkersBtn">🗑️ Clear All Markers</button>
     </div>
 
-    <!-- Set Time Modal (only one input group) -->
+    <!-- Set Time Modal -->
     <div id="timeModal" class="modal">
         <div class="modal-content">
             <h3>Set Timer</h3>
             <div class="time-input-group">
-                <div class="input-unit">
-                    <input type="number" id="modalHours" placeholder="Hours" min="0" value="0" step="1">
-                    <span>hours</span>
-                </div>
-                <div class="input-unit">
-                    <input type="number" id="modalMinutes" placeholder="Minutes" min="0" value="1" step="1">
-                    <span>minutes</span>
-                </div>
-                <div class="input-unit">
-                    <input type="number" id="modalSeconds" placeholder="Seconds" min="0" max="59" value="0" step="1">
-                    <span>seconds</span>
-                </div>
+                <div class="input-unit"><input type="number" id="modalHours" min="0" value="0" step="1"><span>hours</span></div>
+                <div class="input-unit"><input type="number" id="modalMinutes" min="0" value="1" step="1"><span>minutes</span></div>
+                <div class="input-unit"><input type="number" id="modalSeconds" min="0" max="59" value="0" step="1"><span>seconds</span></div>
             </div>
-            <div class="modal-buttons">
-                <button id="modalConfirmBtn">Set Timer</button>
-                <button id="modalCancelBtn">Cancel</button>
-            </div>
+            <div class="modal-buttons"><button id="modalConfirmBtn">Set Timer</button><button id="modalCancelBtn">Cancel</button></div>
         </div>
     </div>
 
-    <!-- Set Marker Modal (only one input group) -->
+    <!-- Set Marker Modal -->
     <div id="markerModal" class="modal">
         <div class="modal-content">
             <h3>Add Marker (notify at this time)</h3>
             <div class="time-input-group">
-                <div class="input-unit">
-                    <input type="number" id="markerHours" placeholder="Hours" min="0" value="0" step="1">
-                    <span>hours</span>
-                </div>
-                <div class="input-unit">
-                    <input type="number" id="markerMinutes" placeholder="Minutes" min="0" value="0" step="1">
-                    <span>minutes</span>
-                </div>
-                <div class="input-unit">
-                    <input type="number" id="markerSeconds" placeholder="Seconds" min="0" max="59" value="0" step="1">
-                    <span>seconds</span>
-                </div>
+                <div class="input-unit"><input type="number" id="markerHours" min="0" value="0" step="1"><span>hours</span></div>
+                <div class="input-unit"><input type="number" id="markerMinutes" min="0" value="0" step="1"><span>minutes</span></div>
+                <div class="input-unit"><input type="number" id="markerSeconds" min="0" max="59" value="0" step="1"><span>seconds</span></div>
             </div>
-            <div class="modal-buttons">
-                <button id="markerConfirmBtn">Add Marker</button>
-                <button id="markerCancelBtn">Cancel</button>
-            </div>
+            <div class="modal-buttons"><button id="markerConfirmBtn">Add Marker</button><button id="markerCancelBtn">Cancel</button></div>
         </div>
     </div>
 
@@ -100,16 +72,14 @@
             <h3 style="text-align: center;">📖 Timer User Guide</h3>
             <ul style="line-height: 1.6; padding-left: 20px;">
                 <li><strong>⏱️ Set Time</strong> – hours, minutes & seconds for countdown or count‑up.</li>
-                <li><strong>⬇️/⬆️ Count Down/Up</strong> – toggle between counting down to zero or up to a target.</li>
-                <li><strong>▶ Start / ⏸ Pause</strong> – starts or pauses the timer.</li>
-                <li><strong>🔄 Reset</strong> – restarts the timer to the last set duration.</li>
-                <li><strong>🚩 Set Marker</strong> – add a flag at a specific time. When reached, it beeps and moves to the "✅ Already reached" list.</li>
-                <li><strong>🗑️ Clear All Markers</strong> – removes both pending and reached markers.</li>
+                <li><strong>⬇️/⬆️ Count Down/Up</strong> – toggle between counting modes.</li>
+                <li><strong>▶ Start / ⏸ Pause</strong> – controls the timer.</li>
+                <li><strong>🔄 Reset</strong> – restarts timer to last set duration.</li>
+                <li><strong>🚩 Set Marker</strong> – add a flag; when reached, it beeps and moves to "Already reached".</li>
+                <li><strong>🗑️ Clear All Markers</strong> – removes all markers.</li>
                 <li><strong>🎨 Color flashes</strong> – green at start, yellow at halfway, red at finish.</li>
             </ul>
-            <div class="modal-buttons" style="margin-top: 20px;">
-                <button id="closeHelpBtn" style="background: white; color: black;">Got it</button>
-            </div>
+            <div class="modal-buttons" style="margin-top: 20px;"><button id="closeHelpBtn" style="background: white; color: black;">Got it</button></div>
         </div>
     </div>
 
@@ -117,9 +87,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('✅ SW registered', reg))
-                    .catch(err => console.log('❌ SW failed', err));
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error:', err));
             });
         }
     </script>

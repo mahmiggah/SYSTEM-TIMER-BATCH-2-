@@ -81,17 +81,22 @@
 
 <!-- Help Modal -->
 <div id="helpModal" class="modal">
-    <div class="modal-content">
-        <h3>📖 User Guide</h3>
-        <ul style="text-align:left; margin:1rem 0;">
-            <li><strong>Set Time</strong> – hours/minutes/seconds</li>
-            <li><strong>Count Down/Up</strong> – toggle mode</li>
-            <li><strong>Markers</strong> – add flags with Red/Green/Yellow color on timeline</li>
-            <li><strong>When a marker is reached</strong> – a popup message appears and the flag disappears</li>
-            <li><strong>Clear All Markers</strong> – removes all pending markers</li>
-            <li><strong>Offline ready</strong> – works after first install</li>
-        </ul>
-        <button id="closeHelpBtn" style="background:#0f172a;color:white;">Got it</button>
+    <div class="modal-content" style="max-width: 500px; text-align: left;">
+        <h3 style="text-align: center; margin-bottom: 0.5rem;">📘 Timer Guide</h3>
+        <div style="margin-top: 1rem;">
+            <p><strong>⏱️ Set Time</strong><br>Enter hours, minutes, and seconds. Click "Set Timer".</p>
+            <p><strong>🔄 Count Down / Up</strong><br>Toggle between counting down to zero or counting up to the target.</p>
+            <p><strong>▶ Start / ⏸ Pause</strong><br>Start or pause the timer. Pausing does not save data.</p>
+            <p><strong>🔄 Reset</strong><br>Reset the timer to the last set duration (does not affect markers).</p>
+            <p><strong>🚩 Markers</strong><br>Add flags at specific times. Choose Red, Green, or Yellow.<br>
+            • Flags appear on the timeline (colored triangles).<br>
+            • When a marker is reached, a popup message appears, and the flag disappears.<br>
+            • Use "Clear All Markers" to remove all pending flags.</p>
+            <p><strong>📱 Offline & Install</strong><br>Install this app to your device for offline use and a native-like experience.</p>
+        </div>
+        <div class="modal-buttons" style="margin-top: 1.5rem;">
+            <button id="closeHelpBtn" style="background:#0f172a; color:white;">Got it</button>
+        </div>
     </div>
 </div>
 

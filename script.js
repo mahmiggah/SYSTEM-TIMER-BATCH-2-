@@ -2,8 +2,7 @@
 const timerHoursSpan = document.querySelector('.timer-hours');
 const timerMinutesSpan = document.querySelector('.timer-minutes');
 const timerSecondsSpan = document.querySelector('.timer-seconds');
-const startBtn = document.getElementById('startBtn');
-const pauseBtn = document.getElementById('pauseBtn');
+const startPauseBtn = document.getElementById('startPauseBtn');
 const resetBtn = document.getElementById('resetBtn');
 const setTimeBtn = document.getElementById('setTimeBtn');
 const modeToggleBtn = document.getElementById('modeToggleBtn');
@@ -83,6 +82,7 @@ function playBeep(freq = 880, dur = 0.5) {
 }
 function finish() {
     stopTimer();
+    startPauseBtn.innerHTML = '▶ Start';
     playBeep(880, 1);
     flashColor('#dc2626');
     const timerDiv = document.querySelector('.timer');
@@ -99,7 +99,7 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// ---------- Timeline drawing (only pending markers) ----------
+// ---------- Timeline drawing ----------
 function drawTimeline() {
     if (!timelineCanvas) return;
     const canvas = timelineCanvas;
@@ -113,7 +113,6 @@ function drawTimeline() {
     ctx.clearRect(0, 0, width, height);
     if (targetSeconds === 0) return;
 
-    // Base line
     ctx.beginPath();
     ctx.moveTo(10, height / 2);
     ctx.lineTo(width - 10, height / 2);
@@ -121,7 +120,6 @@ function drawTimeline() {
     ctx.strokeStyle = '#cbd5e1';
     ctx.stroke();
 
-    // Current position indicator
     let progress = (mode === "down")
         ? (targetSeconds - remainingSeconds) / targetSeconds
         : remainingSeconds / targetSeconds;
@@ -136,18 +134,15 @@ function drawTimeline() {
     ctx.fillStyle = 'white';
     ctx.fill();
 
-    // Draw each pending marker as a flag
     for (let marker of pendingMarkers) {
         const markerPos = marker.seconds / targetSeconds;
         const x = 10 + markerPos * (width - 20);
-        // triangle flag
         ctx.beginPath();
         ctx.moveTo(x, height / 2 - 8);
         ctx.lineTo(x - 4, height / 2);
         ctx.lineTo(x + 4, height / 2);
         ctx.fillStyle = marker.colorHex;
         ctx.fill();
-        // base circle
         ctx.beginPath();
         ctx.arc(x, height / 2, 3, 0, 2 * Math.PI);
         ctx.fillStyle = marker.colorHex;
@@ -193,9 +188,9 @@ function triggerMarker(markerSec) {
     flashColor(marker.colorHex);
 }
 
-// ---------- Timer core (exactly 1 second per tick) ----------
+// ---------- Timer core ----------
 function tick() {
-    if (intervalId === null) return; // timer was stopped externally
+    if (intervalId === null) return;
 
     if (mode === "down") {
         if (remainingSeconds <= 0) {
@@ -213,7 +208,7 @@ function tick() {
             remainingSeconds = 0;
             finish();
         }
-    } else { // up mode
+    } else {
         if (targetSeconds > 0 && remainingSeconds >= targetSeconds) {
             finish();
             return;
@@ -238,13 +233,24 @@ function startTimer() {
     if (mode === "down" && remainingSeconds <= 0) return;
     flashColor('#10b981');
     intervalId = setInterval(() => tick(), 1000);
+    startPauseBtn.innerHTML = '⏸ Pause';
 }
 function pauseTimer() {
+    if (intervalId === null) return;
     stopTimer();
+    startPauseBtn.innerHTML = '▶ Start';
     drawTimeline();
+}
+function toggleStartPause() {
+    if (intervalId === null) {
+        startTimer();
+    } else {
+        pauseTimer();
+    }
 }
 function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     stopTimer();
+    startPauseBtn.innerHTML = '▶ Start';
     let h = parseInt(hours) || 0;
     let m = parseInt(minutes) || 0;
     let s = parseInt(seconds) || 0;
@@ -281,6 +287,7 @@ function closeTimeModal() { timeModal.style.display = 'none'; }
 setTimeBtn.addEventListener('click', openTimeModal);
 resetBtn.addEventListener('click', () => {
     stopTimer();
+    startPauseBtn.innerHTML = '▶ Start';
     if (mode === "down") remainingSeconds = targetSeconds;
     else remainingSeconds = 0;
     halfTriggered = false;
@@ -326,11 +333,11 @@ if (helpBtn && helpModal) {
     helpModal.addEventListener('click', (e) => { if (e.target === helpModal) closeHelp(); });
 }
 
-// ---------- Initialization ----------
+// ---------- Event listeners ----------
 modeToggleBtn.addEventListener('click', toggleMode);
-startBtn.addEventListener('click', startTimer);
-pauseBtn.addEventListener('click', pauseTimer);
+startPauseBtn.addEventListener('click', toggleStartPause);
 
+// ---------- Initial values ----------
 remainingSeconds = 0;
 targetSeconds = 0;
 updateDisplay();

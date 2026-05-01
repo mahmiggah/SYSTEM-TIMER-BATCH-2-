@@ -11,7 +11,7 @@
 </head>
 <body>
 <div class="app">
-    <!-- Timer -->
+    <!-- Timer display -->
     <div class="timer">
         <span class="timer-hours">00</span>
         <span class="timer-colon">:</span>
@@ -25,12 +25,12 @@
         <span class="unit">SECONDS</span>
     </div>
 
-    <!-- Timeline Canvas (contains all flags) -->
+    <!-- Timeline canvas (markers appear as flags) -->
     <div class="timeline-container">
         <canvas id="timelineCanvas" width="800" height="50" style="width:100%; height:50px"></canvas>
     </div>
 
-    <!-- Controls -->
+    <!-- Control buttons (responsive grid) -->
     <div class="controls">
         <button id="setTimeBtn">⏱️ Set Time</button>
         <button id="modeToggleBtn">⬇️ Count Down</button>
@@ -42,10 +42,10 @@
     </div>
 </div>
 
-<!-- Floating Help -->
+<!-- Floating help button -->
 <div id="helpBtn" class="help-corner" title="User Guide">❓</div>
 
-<!-- Set Time Modal -->
+<!-- Set Timer Modal -->
 <div id="timeModal" class="modal">
     <div class="modal-content">
         <h3>Set Timer</h3>
@@ -58,7 +58,7 @@
     </div>
 </div>
 
-<!-- Marker Modal with RGY Color Selection -->
+<!-- Marker Modal with RGY color picker -->
 <div id="markerModal" class="modal">
     <div class="modal-content">
         <h3>Add Marker</h3>
@@ -79,7 +79,7 @@
     </div>
 </div>
 
-<!-- Help Modal -->
+<!-- Help Modal (user guide) -->
 <div id="helpModal" class="modal">
     <div class="modal-content" style="max-width: 500px; text-align: left;">
         <h3 style="text-align: center; margin-bottom: 0.5rem;">📘 Timer Guide</h3>
@@ -102,6 +102,7 @@
 
 <script src="script.js"></script>
 <script>
+    // Register service worker for PWA (offline)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js').catch(console.warn);

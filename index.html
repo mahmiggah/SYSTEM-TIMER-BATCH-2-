@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Glass Timer – Minimal + Futuristic</title>
+    <title>Glass Timer – Timeline Markers</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f8fafc">
@@ -11,6 +11,7 @@
 </head>
 <body>
 <div class="app">
+    <!-- Timer -->
     <div class="timer">
         <span class="timer-hours">00</span>
         <span class="timer-colon">:</span>
@@ -24,19 +25,12 @@
         <span class="unit">SECONDS</span>
     </div>
 
-    <!-- timeline canvas -->
+    <!-- Timeline Canvas (contains all flags) -->
     <div class="timeline-container">
         <canvas id="timelineCanvas" width="800" height="50" style="width:100%; height:50px"></canvas>
     </div>
 
-    <div class="marker-section">
-        <div class="section-label">📌 Pending markers</div>
-        <div id="markerList" class="marker-list"></div>
-        <div class="section-label">✅ Already reached</div>
-        <div id="reachedMarkers" class="reached-markers"></div>
-        <div id="markerIndicator" class="marker-indicator" style="display: none;">❗ Marker reached!</div>
-    </div>
-
+    <!-- Controls -->
     <div class="controls">
         <button id="setTimeBtn">⏱️ Set Time</button>
         <button id="modeToggleBtn">⬇️ Count Down</button>
@@ -48,6 +42,7 @@
     </div>
 </div>
 
+<!-- Floating Help -->
 <div id="helpBtn" class="help-corner" title="User Guide">❓</div>
 
 <!-- Set Time Modal -->
@@ -84,14 +79,16 @@
     </div>
 </div>
 
+<!-- Help Modal -->
 <div id="helpModal" class="modal">
     <div class="modal-content">
         <h3>📖 User Guide</h3>
         <ul style="text-align:left; margin:1rem 0;">
             <li><strong>Set Time</strong> – hours/minutes/seconds</li>
             <li><strong>Count Down/Up</strong> – toggle mode</li>
-            <li><strong>Markers</strong> – add flags with Red/Green/Yellow color. Timeline shows fixed flag colors.</li>
-            <li><strong>Clear All</strong> – remove all markers</li>
+            <li><strong>Markers</strong> – add flags with Red/Green/Yellow color on timeline</li>
+            <li><strong>When a marker is reached</strong> – a popup message appears and the flag disappears</li>
+            <li><strong>Clear All Markers</strong> – removes all pending markers</li>
             <li><strong>Offline ready</strong> – works after first install</li>
         </ul>
         <button id="closeHelpBtn" style="background:#0f172a;color:white;">Got it</button>

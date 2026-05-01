@@ -298,13 +298,28 @@ function closeTimeModal() { timeModal.style.display = 'none'; }
 
 setTimeBtn.addEventListener('click', openTimeModal);
 resetBtn.addEventListener('click', () => {
-    if (interval) stopTimer();
-    if (mode === "down") remainingSeconds = targetSeconds;
-    else remainingSeconds = 0;
+    // stop any running timer
+    if (interval) {
+        clearInterval(interval);
+        interval = null;
+    }
+    // reset to the original target time (or 0 for count‑up)
+    if (mode === "down") {
+        remainingSeconds = targetSeconds;
+    } else {
+        remainingSeconds = 0;
+    }
+    // reset halfway flag
     halfTriggered = false;
+    // update display and timeline
     updateDisplay();
     drawTimeline();
-    document.querySelector('.timer').style.animation = '';
+    // remove any finish animation/pulse
+    const timerDiv = document.querySelector('.timer');
+    timerDiv.style.animation = '';
+    timerDiv.style.color = ''; // reset any flash color
+    // also hide marker indicator if it's still visible
+    if (markerIndicator) markerIndicator.style.display = 'none';
 });
 modalConfirm.addEventListener('click', () => {
     setTimerFromHoursMinutesSeconds(modalHours.value, modalMinutes.value, modalSeconds.value);

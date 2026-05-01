@@ -284,3 +284,16 @@ button:active {
     50% { transform: scale(1.05); text-shadow: 0 0 8px cyan; color: #0ea5e9; }
     100% { transform: scale(1); text-shadow: 0 0 0 cyan; }
 }
+/* timeline canvas wrapper */
+.timeline-container {
+    margin: 1rem 0 0.5rem 0;
+    background: #f1f5f9;
+    border-radius: 1rem;
+    padding: 0.5rem;
+}
+canvas {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border-radius: 0.75rem;
+}

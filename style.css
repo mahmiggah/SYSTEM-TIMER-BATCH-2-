@@ -22,7 +22,6 @@ body {
     border-radius: 2rem;
     box-shadow: 0 20px 35px -10px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.02);
     padding: 2rem;
-    transition: all 0.2s;
 }
 
 .timer {
@@ -65,78 +64,17 @@ body {
     text-align: center;
 }
 
-.marker-section {
+.timeline-container {
+    margin: 1rem 0 0.5rem 0;
     background: #f1f5f9;
-    border-radius: 1.5rem;
-    padding: 1rem;
-    margin: 1.5rem 0;
+    border-radius: 1rem;
+    padding: 0.5rem;
 }
-.section-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #1e293b;
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-.marker-list, .reached-markers {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-.marker-badge, .reached-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: white;
-    border-radius: 2rem;
-    padding: 0.4rem 1rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    transition: all 0.1s;
-    border: 1px solid #e2e8f0;
-}
-.marker-badge {
-    background: white;
-}
-.marker-badge input[type="color"] {
-    width: 24px;
-    height: 24px;
-    border: none;
+canvas {
+    display: block;
+    width: 100%;
     background: transparent;
-    cursor: pointer;
-    border-radius: 50%;
-    padding: 0;
-    margin-left: 0.25rem;
-}
-.marker-badge button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1rem;
-    color: #94a3b8;
-    transition: color 0.1s;
-}
-.marker-badge button:hover {
-    color: #ef4444;
-}
-.reached-badge {
-    background: #e2e8f0;
-    color: #475569;
-    border-color: #cbd5e1;
-}
-.marker-indicator {
-    background: #facc15;
-    color: #0f172a;
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-    border-radius: 2rem;
-    font-size: 0.8rem;
-    display: inline-block;
-    width: auto;
+    border-radius: 0.75rem;
 }
 
 .controls {
@@ -279,36 +217,32 @@ button:active {
     transform: scale(1.05);
 }
 
+/* Toast message */
+.toast-message {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 2000;
+    animation: fadeOut 3s forwards;
+    pointer-events: none;
+    white-space: nowrap;
+}
+@keyframes fadeOut {
+    0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    70% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-10px); visibility: hidden; }
+}
+
 @keyframes pulse {
     0% { transform: scale(1); text-shadow: 0 0 0 cyan; }
     50% { transform: scale(1.05); text-shadow: 0 0 8px cyan; color: #0ea5e9; }
     100% { transform: scale(1); text-shadow: 0 0 0 cyan; }
-}
-/* timeline canvas wrapper */
-.timeline-container {
-    margin: 1rem 0 0.5rem 0;
-    background: #f1f5f9;
-    border-radius: 1rem;
-    padding: 0.5rem;
-}
-canvas {
-    display: block;
-    width: 100%;
-    background: transparent;
-    border-radius: 0.75rem;
-}
-/* timeline popup message */
-.timeline-popup {
-    position: fixed;
-    background: #0f172a;
-    color: white;
-    padding: 0.3rem 0.8rem;
-    border-radius: 2rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    pointer-events: none;
-    transition: opacity 0.2s;
-    z-index: 1000;
-    white-space: nowrap;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }

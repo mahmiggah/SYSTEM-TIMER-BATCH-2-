@@ -3,10 +3,9 @@
     padding: 0;
     box-sizing: border-box;
 }
-
 body {
     background: #f8fafc;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #0f172a;
     min-height: 100vh;
     display: flex;
@@ -14,30 +13,28 @@ body {
     align-items: center;
     padding: 2rem;
 }
-
 .app {
     max-width: 800px;
     width: 100%;
     background: white;
     border-radius: 2rem;
-    box-shadow: 0 20px 35px -10px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.02);
+    box-shadow: 0 20px 35px -10px rgba(0,0,0,0.05);
     padding: 2rem;
 }
-
 .timer {
     display: flex;
     justify-content: center;
     align-items: baseline;
     gap: 0.5rem;
-    font-size: 4.5rem;
+    font-size: 4rem;
     font-weight: 600;
-    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+    font-family: 'JetBrains Mono', monospace;
     letter-spacing: 2px;
-    background: #ffffff;
+    background: white;
     border-radius: 2rem;
     padding: 1rem 2rem;
     margin-bottom: 0.5rem;
-    color: #0a0f2a;
+    color: #0f172a;
     text-align: center;
 }
 .timer span {
@@ -47,15 +44,13 @@ body {
 .timer .timer-colon {
     min-width: auto;
 }
-
 .timer-units {
     display: flex;
     justify-content: center;
     gap: 1rem;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 1px;
     color: #64748b;
     margin-bottom: 2rem;
 }
@@ -63,9 +58,8 @@ body {
     min-width: 3rem;
     text-align: center;
 }
-
 .timeline-container {
-    margin: 1rem 0 0.5rem 0;
+    margin: 1rem 0;
     background: #f1f5f9;
     border-radius: 1rem;
     padding: 0.5rem;
@@ -76,7 +70,6 @@ canvas {
     background: transparent;
     border-radius: 0.75rem;
 }
-
 .controls {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
@@ -128,7 +121,6 @@ button:active {
     color: #dc2626;
     border-color: #fee2e2;
 }
-
 .modal {
     display: none;
     position: fixed;
@@ -196,7 +188,6 @@ button:active {
     color: white;
     border: none;
 }
-
 .help-corner {
     position: fixed;
     bottom: 1.5rem;
@@ -210,16 +201,12 @@ button:active {
     justify-content: center;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     cursor: pointer;
-    z-index: 100;
     font-size: 1.2rem;
     border: 1px solid #e2e8f0;
-    transition: all 0.1s;
 }
 .help-corner:hover {
     transform: scale(1.05);
 }
-
-/* Toast message */
 .toast-message {
     position: fixed;
     bottom: 80px;
@@ -239,33 +226,11 @@ button:active {
 }
 @keyframes fadeOut {
     0% { opacity: 1; transform: translateX(-50%) translateY(0); }
-    70% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    70% { opacity: 1; }
     100% { opacity: 0; transform: translateX(-50%) translateY(-10px); visibility: hidden; }
 }
-
 @keyframes pulse {
     0% { transform: scale(1); text-shadow: 0 0 0 cyan; }
     50% { transform: scale(1.05); text-shadow: 0 0 8px cyan; color: #0ea5e9; }
     100% { transform: scale(1); text-shadow: 0 0 0 cyan; }
-}
-/* Special buttons */
-#startBtn {
-    background: #0f172a;
-    color: white;
-    border-color: #0f172a;
-}
-#startBtn:hover {
-    background: #1e293b;
-}
-#modeToggleBtn {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-}
-#setMarkerBtn {
-    background: #f8fafc;
-    border-left: 3px solid #3b82f6;
-}
-#clearMarkersBtn {
-    color: #dc2626;
-    border-color: #fee2e2;
 }

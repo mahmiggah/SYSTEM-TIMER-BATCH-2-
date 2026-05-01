@@ -1,4 +1,4 @@
-// DOM elements
+// DOM elements (same as before)
 const timerHoursSpan = document.querySelector('.timer-hours');
 const timerMinutesSpan = document.querySelector('.timer-minutes');
 const timerSecondsSpan = document.querySelector('.timer-seconds');
@@ -34,6 +34,9 @@ const helpBtn = document.getElementById('helpBtn');
 const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
 
+// timeline canvas
+const timelineCanvas = document.getElementById('timelineCanvas');
+
 // state
 let interval = null;
 let remainingSeconds = 0;
@@ -43,7 +46,7 @@ let pendingMarkers = [];    // each { seconds, color }
 let hitMarkers = [];
 let halfTriggered = false;
 
-// helpers
+// helper functions
 function formatTime(seconds) {
     const hrs = Math.floor(Math.abs(seconds) / 3600);
     const mins = Math.floor((Math.abs(seconds) % 3600) / 60);
@@ -87,84 +90,86 @@ function finish() {
     timerDiv.style.animation = 'none';
     timerDiv.offsetHeight;
     timerDiv.style.animation = 'pulse 0.5s 3';
+    drawTimeline(); // redraw timeline when finished
 }
 
-// marker rendering with color picker
-function renderMarkerLists() {
-    if (markerListDiv) {
-        markerListDiv.innerHTML = '';
-        pendingMarkers.sort((a,b) => a.seconds - b.seconds).forEach(m => {
-            const p = formatTime(m.seconds);
-            const timeStr = (p.hrs !== '00' ? `${p.hrs}:` : '') + `${p.mins}:${p.secs}`;
-            const badge = document.createElement('div');
-            badge.className = 'marker-badge';
-            badge.style.backgroundColor = `${m.color}20`;
-            badge.style.borderLeftColor = m.color;
-            badge.style.borderLeftWidth = '3px';
-            badge.style.borderLeftStyle = 'solid';
-            badge.innerHTML = `
-                🚩 ${timeStr}
-                <input type="color" value="${m.color}" class="marker-color" data-sec="${m.seconds}">
-                <button data-sec="${m.seconds}">✖</button>
-            `;
-            const colorPicker = badge.querySelector('.marker-color');
-            colorPicker.addEventListener('input', (e) => {
-                const newColor = e.target.value;
-                const marker = pendingMarkers.find(mm => mm.seconds === m.seconds);
-                if (marker) marker.color = newColor;
-                renderMarkerLists();
-            });
-            badge.querySelector('button').addEventListener('click', (e) => {
-                e.stopPropagation();
-                pendingMarkers = pendingMarkers.filter(mx => mx.seconds !== m.seconds);
-                renderMarkerLists();
-            });
-            markerListDiv.appendChild(badge);
-        });
+// ---------- TIMELINE DRAWING (with red/yellow/green markers) ----------
+function drawTimeline() {
+    if (!timelineCanvas) return;
+    const canvas = timelineCanvas;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const width = rect.width;
+    const height = 50;
+    canvas.width = width;
+    canvas.height = height;
+
+    ctx.clearRect(0, 0, width, height);
+    if (targetSeconds === 0) return;
+
+    // draw base line
+    ctx.beginPath();
+    ctx.moveTo(10, height/2);
+    ctx.lineTo(width-10, height/2);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.stroke();
+
+    // calculate current progress (0..1)
+    let progress = 0;
+    if (mode === "down") {
+        progress = (targetSeconds - remainingSeconds) / targetSeconds;
+    } else {
+        progress = remainingSeconds / targetSeconds;
     }
-    if (reachedContainer) {
-        reachedContainer.innerHTML = '';
-        hitMarkers.forEach(sec => {
-            const p = formatTime(sec);
-            const timeStr = (p.hrs !== '00' ? `${p.hrs}:` : '') + `${p.mins}:${p.secs}`;
-            const badge = document.createElement('div');
-            badge.className = 'reached-badge';
-            badge.textContent = `✅ ${timeStr}`;
-            reachedContainer.appendChild(badge);
-        });
+    progress = Math.min(1, Math.max(0, progress));
+
+    // draw current position tick
+    const currentX = 10 + progress * (width - 20);
+    ctx.beginPath();
+    ctx.arc(currentX, height/2, 6, 0, 2*Math.PI);
+    ctx.fillStyle = '#0f172a';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(currentX, height/2, 3, 0, 2*Math.PI);
+    ctx.fillStyle = 'white';
+    ctx.fill();
+
+    // draw pending markers (color based on distance to current time)
+    for (let marker of pendingMarkers) {
+        const markerSec = marker.seconds;
+        // marker position on timeline (0..1)
+        let markerPos = markerSec / targetSeconds;
+        const x = 10 + markerPos * (width - 20);
+        // distance from current progress (absolute difference)
+        const distance = Math.abs(progress - markerPos);
+        let color;
+        if (distance < 0.05) color = '#ef4444'; // red (very close)
+        else if (distance < 0.15) color = '#eab308'; // yellow (approaching)
+        else color = '#10b981'; // green (far)
+        // draw flag (triangle)
+        ctx.beginPath();
+        ctx.moveTo(x, height/2 - 8);
+        ctx.lineTo(x - 4, height/2);
+        ctx.lineTo(x + 4, height/2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        // small circle at base
+        ctx.beginPath();
+        ctx.arc(x, height/2, 3, 0, 2*Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
     }
-}
-function addMarker(hours, minutes, seconds, color = '#3b82f6') {
-    let h = parseInt(hours)||0, m = parseInt(minutes)||0, s = parseInt(seconds)||0;
-    if (s > 59) s = 59;
-    const total = h*3600 + m*60 + s;
-    if (total === 0) return;
-    if (!pendingMarkers.some(mk => mk.seconds === total) && !hitMarkers.includes(total)) {
-        pendingMarkers.push({ seconds: total, color: color });
-        renderMarkerLists();
-    }
-}
-function clearAllMarkers() {
-    pendingMarkers = [];
-    hitMarkers = [];
-    renderMarkerLists();
-}
-function triggerMarker(markerSec) {
-    const idx = pendingMarkers.findIndex(m => m.seconds === markerSec);
-    if (idx === -1) return;
-    const markerColor = pendingMarkers[idx].color;
-    pendingMarkers = pendingMarkers.filter(m => m.seconds !== markerSec);
-    if (!hitMarkers.includes(markerSec)) hitMarkers.push(markerSec);
-    renderMarkerLists();
-    if (markerIndicator) {
-        markerIndicator.style.display = 'block';
-        setTimeout(() => markerIndicator.style.display = 'none', 1500);
-    }
-    playBeep(1200, 0.3);
-    flashColor(markerColor);
+    // optional: also show hit markers as grayed out? (skip for simplicity)
 }
 
-// timer core
+// call drawTimeline whenever state changes that affects timeline
+function updateTimelineAndUI() {
+    updateDisplay();
+    drawTimeline();
+}
+
+// modify tick to call drawTimeline after each second
 function tick() {
     if (mode === "down") {
         remainingSeconds--;
@@ -189,16 +194,21 @@ function tick() {
         }
     }
     updateDisplay();
+    drawTimeline();   // update timeline position and marker colors
 }
+
+// override start, setTimer, etc. to redraw timeline
 function startTimer() {
     if (interval !== null) return;
     if (mode === "down" && remainingSeconds <= 0) return;
     flashColor('#10b981');
     interval = setInterval(tick, 1000);
+    drawTimeline();
 }
 function pauseTimer() {
     if (interval === null) return;
     stopTimer();
+    drawTimeline();
 }
 function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     if (interval) stopTimer();
@@ -210,6 +220,7 @@ function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     else remainingSeconds = 0;
     halfTriggered = false;
     updateDisplay();
+    drawTimeline();
     document.querySelector('.timer').style.animation = '';
 }
 function toggleMode() {
@@ -220,7 +231,118 @@ function toggleMode() {
     setTimerFromHoursMinutesSeconds(hrs, mins, secs);
 }
 
-// modal handlers
+// marker rendering (unchanged, but call drawTimeline after any marker change)
+function renderMarkerLists() {
+    // ... (same as previous version) ...
+    if (markerListDiv) {
+        markerListDiv.innerHTML = '';
+        pendingMarkers.sort((a,b) => a.seconds - b.seconds).forEach(m => {
+            const p = formatTime(m.seconds);
+            const timeStr = (p.hrs !== '00' ? `${p.hrs}:` : '') + `${p.mins}:${p.secs}`;
+            const badge = document.createElement('div');
+            badge.className = 'marker-badge';
+            badge.style.backgroundColor = `${m.color}20`;
+            badge.style.borderLeftColor = m.color;
+            badge.style.borderLeftWidth = '3px';
+            badge.style.borderLeftStyle = 'solid';
+            badge.innerHTML = `
+                🚩 ${timeStr}
+                <input type="color" value="${m.color}" class="marker-color" data-sec="${m.seconds}">
+                <button data-sec="${m.seconds}">✖</button>
+            `;
+            const colorPicker = badge.querySelector('.marker-color');
+            colorPicker.addEventListener('input', (e) => {
+                const newColor = e.target.value;
+                const marker = pendingMarkers.find(mm => mm.seconds === m.seconds);
+                if (marker) marker.color = newColor;
+                renderMarkerLists();
+                drawTimeline();
+            });
+            badge.querySelector('button').addEventListener('click', (e) => {
+                e.stopPropagation();
+                pendingMarkers = pendingMarkers.filter(mx => mx.seconds !== m.seconds);
+                renderMarkerLists();
+                drawTimeline();
+            });
+            markerListDiv.appendChild(badge);
+        });
+    }
+    if (reachedContainer) {
+        reachedContainer.innerHTML = '';
+        hitMarkers.forEach(sec => {
+            const p = formatTime(sec);
+            const timeStr = (p.hrs !== '00' ? `${p.hrs}:` : '') + `${p.mins}:${p.secs}`;
+            const badge = document.createElement('div');
+            badge.className = 'reached-badge';
+            badge.textContent = `✅ ${timeStr}`;
+            reachedContainer.appendChild(badge);
+        });
+    }
+    drawTimeline();
+}
+
+function addMarker(hours, minutes, seconds, color = '#3b82f6') {
+    let h = parseInt(hours)||0, m = parseInt(minutes)||0, s = parseInt(seconds)||0;
+    if (s > 59) s = 59;
+    const total = h*3600 + m*60 + s;
+    if (total === 0) return;
+    if (!pendingMarkers.some(mk => mk.seconds === total) && !hitMarkers.includes(total)) {
+        pendingMarkers.push({ seconds: total, color: color });
+        renderMarkerLists();
+        drawTimeline();
+    }
+}
+function clearAllMarkers() {
+    pendingMarkers = [];
+    hitMarkers = [];
+    renderMarkerLists();
+    drawTimeline();
+}
+function triggerMarker(markerSec) {
+    const idx = pendingMarkers.findIndex(m => m.seconds === markerSec);
+    if (idx === -1) return;
+    const markerColor = pendingMarkers[idx].color;
+    pendingMarkers = pendingMarkers.filter(m => m.seconds !== markerSec);
+    if (!hitMarkers.includes(markerSec)) hitMarkers.push(markerSec);
+    renderMarkerLists();
+    if (markerIndicator) {
+        markerIndicator.style.display = 'block';
+        setTimeout(() => markerIndicator.style.display = 'none', 1500);
+    }
+    playBeep(1200, 0.3);
+    flashColor(markerColor);
+    drawTimeline();
+}
+
+// attach event listeners (same as before, but ensure drawTimeline called where needed)
+setTimeBtn.addEventListener('click', openTimeModal);
+resetBtn.addEventListener('click', () => {
+    if (interval) stopTimer();
+    if (mode === "down") remainingSeconds = targetSeconds;
+    else remainingSeconds = 0;
+    halfTriggered = false;
+    updateDisplay();
+    drawTimeline();
+    document.querySelector('.timer').style.animation = '';
+});
+modalConfirm.addEventListener('click', () => {
+    setTimerFromHoursMinutesSeconds(modalHours.value, modalMinutes.value, modalSeconds.value);
+    closeTimeModal();
+});
+modalCancel.addEventListener('click', closeTimeModal);
+timeModal.addEventListener('click', (e) => { if (e.target === timeModal) closeTimeModal(); });
+setMarkerBtn.addEventListener('click', openMarkerModal);
+markerConfirm.addEventListener('click', () => {
+    addMarker(markerHours.value, markerMinutes.value, markerSecs.value);
+    closeMarkerModal();
+});
+markerCancel.addEventListener('click', closeMarkerModal);
+markerModal.addEventListener('click', (e) => { if (e.target === markerModal) closeMarkerModal(); });
+clearMarkersBtn.addEventListener('click', clearAllMarkers);
+modeToggleBtn.addEventListener('click', toggleMode);
+startBtn.addEventListener('click', startTimer);
+pauseBtn.addEventListener('click', pauseTimer);
+
 function openTimeModal() {
     const curr = mode === "down" ? targetSeconds : remainingSeconds;
     modalHours.value = Math.floor(curr/3600);
@@ -230,38 +352,12 @@ function openTimeModal() {
     modalHours.focus();
 }
 function closeTimeModal() { timeModal.style.display = 'none'; }
-setTimeBtn.addEventListener('click', openTimeModal);
-resetBtn.addEventListener('click', () => {
-    if (interval) stopTimer();
-    if (mode === "down") remainingSeconds = targetSeconds;
-    else remainingSeconds = 0;
-    halfTriggered = false;
-    updateDisplay();
-    document.querySelector('.timer').style.animation = '';
-});
-modalConfirm.addEventListener('click', () => {
-    setTimerFromHoursMinutesSeconds(modalHours.value, modalMinutes.value, modalSeconds.value);
-    closeTimeModal();
-});
-modalCancel.addEventListener('click', closeTimeModal);
-timeModal.addEventListener('click', (e) => { if (e.target === timeModal) closeTimeModal(); });
-
 function openMarkerModal() {
     markerHours.value = 0; markerMinutes.value = 0; markerSecs.value = 0;
     markerModal.style.display = 'flex';
     markerHours.focus();
 }
 function closeMarkerModal() { markerModal.style.display = 'none'; }
-setMarkerBtn.addEventListener('click', openMarkerModal);
-markerConfirm.addEventListener('click', () => {
-    addMarker(markerHours.value, markerMinutes.value, markerSecs.value);
-    closeMarkerModal();
-});
-markerCancel.addEventListener('click', closeMarkerModal);
-markerModal.addEventListener('click', (e) => { if (e.target === markerModal) closeMarkerModal(); });
-clearMarkersBtn.addEventListener('click', clearAllMarkers);
-
-// help modal
 if (helpBtn && helpModal) {
     helpBtn.addEventListener('click', () => helpModal.style.display = 'flex');
     const closeHelp = () => helpModal.style.display = 'none';
@@ -269,12 +365,11 @@ if (helpBtn && helpModal) {
     helpModal.addEventListener('click', (e) => { if (e.target === helpModal) closeHelp(); });
 }
 
-// start/pause/mode
-modeToggleBtn.addEventListener('click', toggleMode);
-startBtn.addEventListener('click', startTimer);
-pauseBtn.addEventListener('click', pauseTimer);
-
-// initial
+// initial draw
 remainingSeconds = 0;
 targetSeconds = 0;
 updateDisplay();
+drawTimeline();
+
+// also draw on window resize
+window.addEventListener('resize', () => { drawTimeline(); });

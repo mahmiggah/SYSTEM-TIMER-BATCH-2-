@@ -179,6 +179,7 @@ function triggerMarker(markerSec) {
     const idx = pendingMarkers.findIndex(m => m.seconds === markerSec);
     if (idx === -1) return;
     const marker = pendingMarkers[idx];
+    console.log(`Triggering marker at ${markerSec} seconds, color: ${marker.colorHex}`);
     const timeStr = formatTime(marker.seconds);
     const formatted = `${timeStr.hrs}:${timeStr.mins}:${timeStr.secs}`;
     showToast(`✅ Marker reached: ${formatted}`);

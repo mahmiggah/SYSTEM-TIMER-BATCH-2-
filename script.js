@@ -1,4 +1,4 @@
-// DOM elements
+// ---------- DOM elements ----------
 const timerHoursSpan = document.querySelector('.timer-hours');
 const timerMinutesSpan = document.querySelector('.timer-minutes');
 const timerSecondsSpan = document.querySelector('.timer-seconds');
@@ -30,24 +30,15 @@ const helpBtn = document.getElementById('helpBtn');
 const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
 
-// State
+// ---------- Timer state ----------
 let intervalId = null;
 let remainingSeconds = 0;
 let targetSeconds = 0;
-let mode = "down"; // "down" or "up"
-let pendingMarkers = []; // each { seconds, colorHex }
+let mode = "down";              // "down" or "up"
+let pendingMarkers = [];        // { seconds, colorHex }
 let halfTriggered = false;
 
-// Helper: show toast message
-function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast-message';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-// Format time
+// ---------- Helper functions ----------
 function formatTime(seconds) {
     const hrs = Math.floor(Math.abs(seconds) / 3600);
     const mins = Math.floor((Math.abs(seconds) % 3600) / 60);
@@ -100,8 +91,15 @@ function finish() {
     timerDiv.style.animation = 'pulse 0.5s 3';
     drawTimeline();
 }
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-message';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
 
-// Timeline drawing (only pending markers)
+// ---------- Timeline drawing (only pending markers) ----------
 function drawTimeline() {
     if (!timelineCanvas) return;
     const canvas = timelineCanvas;
@@ -123,13 +121,10 @@ function drawTimeline() {
     ctx.strokeStyle = '#cbd5e1';
     ctx.stroke();
 
-    // Current position
-    let progress = 0;
-    if (mode === "down") {
-        progress = (targetSeconds - remainingSeconds) / targetSeconds;
-    } else {
-        progress = remainingSeconds / targetSeconds;
-    }
+    // Current position indicator
+    let progress = (mode === "down")
+        ? (targetSeconds - remainingSeconds) / targetSeconds
+        : remainingSeconds / targetSeconds;
     progress = Math.min(1, Math.max(0, progress));
     const currentX = 10 + progress * (width - 20);
     ctx.beginPath();
@@ -141,7 +136,7 @@ function drawTimeline() {
     ctx.fillStyle = 'white';
     ctx.fill();
 
-    // Pending markers (flags)
+    // Draw each pending marker as a flag
     for (let marker of pendingMarkers) {
         const markerPos = marker.seconds / targetSeconds;
         const x = 10 + markerPos * (width - 20);
@@ -160,7 +155,7 @@ function drawTimeline() {
     }
 }
 
-// Marker management (no separate lists)
+// ---------- Marker management ----------
 function addMarker(hours, minutes, seconds, colorHex) {
     let h = parseInt(hours) || 0;
     let m = parseInt(minutes) || 0;
@@ -172,7 +167,6 @@ function addMarker(hours, minutes, seconds, colorHex) {
         alert('Please set a timer time first.');
         return;
     }
-    // Check if marker already exists (pending or already reached)
     if (pendingMarkers.some(mk => mk.seconds === totalSec)) return;
     if (totalSec > targetSeconds) {
         alert('Marker time exceeds timer duration.');
@@ -199,9 +193,10 @@ function triggerMarker(markerSec) {
     flashColor(marker.colorHex);
 }
 
-// Timer core (fixed speed)
+// ---------- Timer core (exactly 1 second per tick) ----------
 function tick() {
-    if (intervalId === null) return; // timer stopped externally
+    if (intervalId === null) return; // timer was stopped externally
+
     if (mode === "down") {
         if (remainingSeconds <= 0) {
             finish();
@@ -273,7 +268,7 @@ function toggleMode() {
     setTimerFromHoursMinutesSeconds(hrs, mins, secs);
 }
 
-// Modals
+// ---------- Modal handlers ----------
 function openTimeModal() {
     const curr = mode === "down" ? targetSeconds : remainingSeconds;
     modalHours.value = Math.floor(curr / 3600);
@@ -331,11 +326,11 @@ if (helpBtn && helpModal) {
     helpModal.addEventListener('click', (e) => { if (e.target === helpModal) closeHelp(); });
 }
 
+// ---------- Initialization ----------
 modeToggleBtn.addEventListener('click', toggleMode);
 startBtn.addEventListener('click', startTimer);
 pauseBtn.addEventListener('click', pauseTimer);
 
-// Initial
 remainingSeconds = 0;
 targetSeconds = 0;
 updateDisplay();

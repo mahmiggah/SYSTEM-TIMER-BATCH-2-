@@ -3,9 +3,10 @@
     padding: 0;
     box-sizing: border-box;
 }
+
 body {
     background: #f8fafc;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
     color: #0f172a;
     min-height: 100vh;
     display: flex;
@@ -13,6 +14,7 @@ body {
     align-items: center;
     padding: 2rem;
 }
+
 .app {
     max-width: 800px;
     width: 100%;
@@ -21,6 +23,8 @@ body {
     box-shadow: 0 20px 35px -10px rgba(0,0,0,0.05);
     padding: 2rem;
 }
+
+/* Timer display */
 .timer {
     display: flex;
     justify-content: center;
@@ -28,7 +32,7 @@ body {
     gap: 0.5rem;
     font-size: 4rem;
     font-weight: 600;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
     letter-spacing: 2px;
     background: white;
     border-radius: 2rem;
@@ -44,6 +48,7 @@ body {
 .timer .timer-colon {
     min-width: auto;
 }
+
 .timer-units {
     display: flex;
     justify-content: center;
@@ -58,6 +63,8 @@ body {
     min-width: 3rem;
     text-align: center;
 }
+
+/* Timeline canvas */
 .timeline-container {
     margin: 1rem 0;
     background: #f1f5f9;
@@ -70,12 +77,15 @@ canvas {
     background: transparent;
     border-radius: 0.75rem;
 }
+
+/* Button grid – modern & responsive */
 .controls {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
     gap: 0.75rem;
     margin: 1.5rem 0;
 }
+
 button {
     background: white;
     border: 1px solid #e2e8f0;
@@ -101,6 +111,8 @@ button:hover {
 button:active {
     transform: translateY(1px);
 }
+
+/* Special button variants */
 #startBtn {
     background: #0f172a;
     color: white;
@@ -121,6 +133,8 @@ button:active {
     color: #dc2626;
     border-color: #fee2e2;
 }
+
+/* Modals */
 .modal {
     display: none;
     position: fixed;
@@ -188,6 +202,8 @@ button:active {
     color: white;
     border: none;
 }
+
+/* Help button (bottom‑right) */
 .help-corner {
     position: fixed;
     bottom: 1.5rem;
@@ -207,6 +223,8 @@ button:active {
 .help-corner:hover {
     transform: scale(1.05);
 }
+
+/* Toast message for marker reached */
 .toast-message {
     position: fixed;
     bottom: 80px;
@@ -229,6 +247,8 @@ button:active {
     70% { opacity: 1; }
     100% { opacity: 0; transform: translateX(-50%) translateY(-10px); visibility: hidden; }
 }
+
+/* Pulse animation for finish */
 @keyframes pulse {
     0% { transform: scale(1); text-shadow: 0 0 0 cyan; }
     50% { transform: scale(1.05); text-shadow: 0 0 8px cyan; color: #0ea5e9; }

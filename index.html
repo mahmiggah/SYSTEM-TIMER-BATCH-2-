@@ -11,7 +11,6 @@
 </head>
 <body>
 <div class="app">
-    <!-- timer -->
     <div class="timer">
         <span class="timer-hours">00</span>
         <span class="timer-colon">:</span>
@@ -25,21 +24,19 @@
         <span class="unit">SECONDS</span>
     </div>
 
-    <!-- timeline canvas (marker flags) -->
+    <!-- timeline canvas -->
     <div class="timeline-container">
         <canvas id="timelineCanvas" width="800" height="50" style="width:100%; height:50px"></canvas>
     </div>
 
-    <!-- markers area -->
     <div class="marker-section">
-        <div class="section-label">📌 Pending markers (click 🎨 to change color)</div>
+        <div class="section-label">📌 Pending markers</div>
         <div id="markerList" class="marker-list"></div>
         <div class="section-label">✅ Already reached</div>
         <div id="reachedMarkers" class="reached-markers"></div>
         <div id="markerIndicator" class="marker-indicator" style="display: none;">❗ Marker reached!</div>
     </div>
 
-    <!-- buttons -->
     <div class="controls">
         <button id="setTimeBtn">⏱️ Set Time</button>
         <button id="modeToggleBtn">⬇️ Count Down</button>
@@ -51,10 +48,9 @@
     </div>
 </div>
 
-<!-- floating help -->
 <div id="helpBtn" class="help-corner" title="User Guide">❓</div>
 
-<!-- modals (same as before) -->
+<!-- Set Time Modal -->
 <div id="timeModal" class="modal">
     <div class="modal-content">
         <h3>Set Timer</h3>
@@ -67,6 +63,7 @@
     </div>
 </div>
 
+<!-- Marker Modal with RGY Color Selection -->
 <div id="markerModal" class="modal">
     <div class="modal-content">
         <h3>Add Marker</h3>
@@ -75,7 +72,15 @@
             <div class="input-unit"><input type="number" id="markerMinutes" min="0" value="0" step="1"><span>minutes</span></div>
             <div class="input-unit"><input type="number" id="markerSeconds" min="0" max="59" value="0" step="1"><span>seconds</span></div>
         </div>
-        <div class="modal-buttons"><button id="markerConfirmBtn">Add Marker</button><button id="markerCancelBtn">Cancel</button></div>
+        <div style="margin: 1rem 0;">
+            <label style="margin-right: 1rem;"><input type="radio" name="markerColor" value="#ef4444" checked> 🔴 Red</label>
+            <label style="margin-right: 1rem;"><input type="radio" name="markerColor" value="#10b981"> 🟢 Green</label>
+            <label><input type="radio" name="markerColor" value="#eab308"> 🟡 Yellow</label>
+        </div>
+        <div class="modal-buttons">
+            <button id="markerConfirmBtn">Add Marker</button>
+            <button id="markerCancelBtn">Cancel</button>
+        </div>
     </div>
 </div>
 
@@ -85,7 +90,7 @@
         <ul style="text-align:left; margin:1rem 0;">
             <li><strong>Set Time</strong> – hours/minutes/seconds</li>
             <li><strong>Count Down/Up</strong> – toggle mode</li>
-            <li><strong>Markers</strong> – add flags; click color picker to change badge color; timeline flags show red/yellow/green based on proximity</li>
+            <li><strong>Markers</strong> – add flags with Red/Green/Yellow color. Timeline shows fixed flag colors.</li>
             <li><strong>Clear All</strong> – remove all markers</li>
             <li><strong>Offline ready</strong> – works after first install</li>
         </ul>

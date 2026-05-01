@@ -204,11 +204,10 @@ function tick() {
             flashColor('#eab308');
         }
         const markerHit = pendingMarkers.find(m => m.seconds === remainingSeconds);
-        if (markerHit) triggerMarker(markerHit.seconds);
-        if (remainingSeconds <= 0) {
-            remainingSeconds = 0;
-            finish();
-        }
+        if (markerHit) {
+             console.log(`Tick at ${remainingSeconds}, marker found:`, markerHit);
+             triggerMarker(markerHit.seconds);
+         }
     } else {
         if (targetSeconds > 0 && remainingSeconds >= targetSeconds) {
             finish();

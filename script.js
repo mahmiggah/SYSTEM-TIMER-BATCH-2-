@@ -113,6 +113,7 @@ function drawTimeline() {
     ctx.clearRect(0, 0, width, height);
     if (targetSeconds === 0) return;
 
+    // Base line
     ctx.beginPath();
     ctx.moveTo(10, height / 2);
     ctx.lineTo(width - 10, height / 2);
@@ -120,9 +121,15 @@ function drawTimeline() {
     ctx.strokeStyle = '#cbd5e1';
     ctx.stroke();
 
-    let progress = (mode === "down")
-        ? (targetSeconds - remainingSeconds) / targetSeconds
-        : remainingSeconds / targetSeconds;
+    // Calculate progress and marker positions based on mode
+    let progress;
+    if (mode === "down") {
+        // Countdown: 0 at left (start), 1 at right (finish)
+        progress = (targetSeconds - remainingSeconds) / targetSeconds;
+    } else {
+        // Count‑up: 1 at left (start), 0 at right (finish) → reverses direction
+        progress = 1 - (remainingSeconds / targetSeconds);
+    }
     progress = Math.min(1, Math.max(0, progress));
     const currentX = 10 + progress * (width - 20);
     ctx.beginPath();
@@ -134,15 +141,24 @@ function drawTimeline() {
     ctx.fillStyle = 'white';
     ctx.fill();
 
+    // Draw markers
     for (let marker of pendingMarkers) {
-        const markerPos = marker.seconds / targetSeconds;
+        let markerPos;
+        if (mode === "down") {
+            markerPos = marker.seconds / targetSeconds;
+        } else {
+            // For count‑up, reverse marker position: 1 at left, 0 at right
+            markerPos = 1 - (marker.seconds / targetSeconds);
+        }
         const x = 10 + markerPos * (width - 20);
+        // triangle flag
         ctx.beginPath();
         ctx.moveTo(x, height / 2 - 8);
         ctx.lineTo(x - 4, height / 2);
         ctx.lineTo(x + 4, height / 2);
         ctx.fillStyle = marker.colorHex;
         ctx.fill();
+        // base circle
         ctx.beginPath();
         ctx.arc(x, height / 2, 3, 0, 2 * Math.PI);
         ctx.fillStyle = marker.colorHex;

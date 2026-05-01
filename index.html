@@ -25,6 +25,11 @@
         <span class="unit">SECONDS</span>
     </div>
 
+    <!-- timeline canvas (marker flags) -->
+    <div class="timeline-container">
+        <canvas id="timelineCanvas" width="800" height="50" style="width:100%; height:50px"></canvas>
+    </div>
+
     <!-- markers area -->
     <div class="marker-section">
         <div class="section-label">📌 Pending markers (click 🎨 to change color)</div>
@@ -49,7 +54,7 @@
 <!-- floating help -->
 <div id="helpBtn" class="help-corner" title="User Guide">❓</div>
 
-<!-- modals -->
+<!-- modals (same as before) -->
 <div id="timeModal" class="modal">
     <div class="modal-content">
         <h3>Set Timer</h3>
@@ -80,7 +85,7 @@
         <ul style="text-align:left; margin:1rem 0;">
             <li><strong>Set Time</strong> – hours/minutes/seconds</li>
             <li><strong>Count Down/Up</strong> – toggle mode</li>
-            <li><strong>Markers</strong> – add flags; click color picker to change color; when reached, they move to "already reached" list</li>
+            <li><strong>Markers</strong> – add flags; click color picker to change badge color; timeline flags show red/yellow/green based on proximity</li>
             <li><strong>Clear All</strong> – remove all markers</li>
             <li><strong>Offline ready</strong> – works after first install</li>
         </ul>

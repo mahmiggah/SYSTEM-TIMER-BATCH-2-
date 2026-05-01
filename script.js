@@ -1,4 +1,4 @@
-// ---------- DOM elements ----------
+// DOM elements (unchanged)
 const timerHoursSpan = document.querySelector('.timer-hours');
 const timerMinutesSpan = document.querySelector('.timer-minutes');
 const timerSecondsSpan = document.querySelector('.timer-seconds');
@@ -13,7 +13,6 @@ const markerIndicator = document.getElementById('markerIndicator');
 const markerListDiv = document.getElementById('markerList');
 const reachedContainer = document.getElementById('reachedMarkers');
 
-// Modal elements
 const timeModal = document.getElementById('timeModal');
 const modalHours = document.getElementById('modalHours');
 const modalMinutes = document.getElementById('modalMinutes');
@@ -34,16 +33,16 @@ const closeHelpBtn = document.getElementById('closeHelpBtn');
 
 const timelineCanvas = document.getElementById('timelineCanvas');
 
-// ---------- State ----------
-let interval = null;           // interval ID
+// State
+let interval = null;
 let remainingSeconds = 0;
 let targetSeconds = 0;
 let mode = "down";
-let pendingMarkers = [];       // each { seconds, colorHex }
-let hitMarkers = [];
+let pendingMarkers = [];    // each { seconds, colorHex }
+let hitMarkers = [];        // each { seconds } (we'll store just seconds, draw gray)
 let halfTriggered = false;
 
-// ---------- Helpers ----------
+// ---------- helpers ----------
 function formatTime(seconds) {
     const hrs = Math.floor(Math.abs(seconds) / 3600);
     const mins = Math.floor((Math.abs(seconds) % 3600) / 60);
@@ -93,7 +92,7 @@ function finish() {
     drawTimeline();
 }
 
-// ---------- Timeline drawing ----------
+// ---------- Timeline drawing (pending + reached flags) ----------
 function drawTimeline() {
     if (!timelineCanvas) return;
     const canvas = timelineCanvas;
@@ -107,6 +106,7 @@ function drawTimeline() {
     ctx.clearRect(0, 0, width, height);
     if (targetSeconds === 0) return;
 
+    // base line
     ctx.beginPath();
     ctx.moveTo(10, height/2);
     ctx.lineTo(width-10, height/2);
@@ -114,12 +114,8 @@ function drawTimeline() {
     ctx.strokeStyle = '#cbd5e1';
     ctx.stroke();
 
-    let progress = 0;
-    if (mode === "down") {
-        progress = (targetSeconds - remainingSeconds) / targetSeconds;
-    } else {
-        progress = remainingSeconds / targetSeconds;
-    }
+    // progress dot
+    let progress = (mode === "down") ? (targetSeconds - remainingSeconds) / targetSeconds : remainingSeconds / targetSeconds;
     progress = Math.min(1, Math.max(0, progress));
     const currentX = 10 + progress * (width - 20);
     ctx.beginPath();
@@ -131,23 +127,62 @@ function drawTimeline() {
     ctx.fillStyle = 'white';
     ctx.fill();
 
+    // draw pending markers (original colors)
     for (let marker of pendingMarkers) {
-        const markerPos = marker.seconds / targetSeconds;
-        const x = 10 + markerPos * (width - 20);
+        const pos = marker.seconds / targetSeconds;
+        const x = 10 + pos * (width - 20);
+        // flag
         ctx.beginPath();
         ctx.moveTo(x, height/2 - 8);
         ctx.lineTo(x - 4, height/2);
         ctx.lineTo(x + 4, height/2);
         ctx.fillStyle = marker.colorHex;
         ctx.fill();
+        // base circle
         ctx.beginPath();
         ctx.arc(x, height/2, 3, 0, 2*Math.PI);
         ctx.fillStyle = marker.colorHex;
         ctx.fill();
     }
+
+    // draw reached markers (gray)
+    for (let hitSec of hitMarkers) {
+        const pos = hitSec / targetSeconds;
+        if (pos < 0 || pos > 1) continue;
+        const x = 10 + pos * (width - 20);
+        ctx.beginPath();
+        ctx.moveTo(x, height/2 - 8);
+        ctx.lineTo(x - 4, height/2);
+        ctx.lineTo(x + 4, height/2);
+        ctx.fillStyle = '#9ca3af';   // gray for reached
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x, height/2, 3, 0, 2*Math.PI);
+        ctx.fillStyle = '#9ca3af';
+        ctx.fill();
+    }
 }
 
-// ---------- Marker rendering ----------
+// ---------- Popup message on marker reached ----------
+function showTimelinePopup(message, xPos) {
+    const popup = document.createElement('div');
+    popup.className = 'timeline-popup';
+    popup.textContent = message;
+    document.body.appendChild(popup);
+    // position near the timeline (above the flag)
+    const canvasRect = timelineCanvas.getBoundingClientRect();
+    const timelineTop = canvasRect.top;
+    const relativeX = canvasRect.left + xPos;
+    popup.style.left = relativeX + 'px';
+    popup.style.top = (timelineTop - 25) + 'px';
+    popup.style.opacity = '1';
+    setTimeout(() => {
+        popup.style.opacity = '0';
+        setTimeout(() => popup.remove(), 300);
+    }, 2000);
+}
+
+// ---------- Marker rendering (badges) ----------
 function renderMarkerLists() {
     if (markerListDiv) {
         markerListDiv.innerHTML = '';
@@ -207,23 +242,36 @@ function triggerMarker(markerSec) {
     const idx = pendingMarkers.findIndex(m => m.seconds === markerSec);
     if (idx === -1) return;
     const markerColor = pendingMarkers[idx].colorHex;
+    // move from pending to hit markers
     pendingMarkers = pendingMarkers.filter(m => m.seconds !== markerSec);
     if (!hitMarkers.includes(markerSec)) hitMarkers.push(markerSec);
-    renderMarkerLists();
+    renderMarkerLists(); // updates badges and re-draws timeline
+
+    // show temporary indicator (already exists)
     if (markerIndicator) {
         markerIndicator.style.display = 'block';
         setTimeout(() => markerIndicator.style.display = 'none', 1500);
     }
     playBeep(1200, 0.3);
     flashColor(markerColor);
+
+    // Show a popup message near the flag on the timeline
+    // Calculate the flag's x position on the canvas
+    if (timelineCanvas && targetSeconds > 0) {
+        const rect = timelineCanvas.getBoundingClientRect();
+        const width = rect.width;
+        const pos = markerSec / targetSeconds;
+        const xPixel = 10 + pos * (width - 20);
+        const timeStr = formatTime(markerSec);
+        const formatted = (timeStr.hrs !== '00' ? `${timeStr.hrs}:` : '') + `${timeStr.mins}:${timeStr.secs}`;
+        showTimelinePopup(`🚩 ${formatted} reached!`, xPixel);
+    }
     drawTimeline();
 }
 
-// ---------- Timer core (fixed tick) ----------
+// ---------- Timer core ----------
 function tick() {
-    // Guard: do nothing if timer has been externally stopped
     if (interval === null) return;
-
     if (mode === "down") {
         if (remainingSeconds <= 0) {
             finish();
@@ -261,7 +309,7 @@ function tick() {
     drawTimeline();
 }
 function startTimer() {
-    if (interval !== null) return;   // already running
+    if (interval !== null) return;
     if (mode === "down" && remainingSeconds <= 0) return;
     flashColor('#10b981');
     interval = setInterval(() => tick(), 1000);

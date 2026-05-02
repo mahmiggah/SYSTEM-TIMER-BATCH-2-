@@ -9,7 +9,6 @@ const modeToggleBtn = document.getElementById('modeToggleBtn');
 const setMarkerBtn = document.getElementById('setMarkerBtn');
 const clearMarkersBtn = document.getElementById('clearMarkersBtn');
 const timelineCanvas = document.getElementById('timelineCanvas');
-const progressCircle = document.querySelector('.progress-ring__circle');
 
 // Modals
 const timeModal = document.getElementById('timeModal');
@@ -38,9 +37,6 @@ let mode = "down";              // "down" or "up"
 let pendingMarkers = [];        // { seconds, colorHex }
 let halfTriggered = false;
 
-// Circumference of the circle (2 * π * 108 ≈ 678.584)
-const CIRCUMFERENCE = 2 * Math.PI * 108;
-
 // ---------- Helper functions ----------
 function formatTime(seconds) {
     const hrs = Math.floor(Math.abs(seconds) / 3600);
@@ -57,37 +53,9 @@ function updateDisplay() {
     timerHoursSpan.textContent = parts.hrs;
     timerMinutesSpan.textContent = parts.mins;
     timerSecondsSpan.textContent = parts.secs;
-    // Update progress ring
-    if (targetSeconds === 0) {
-        progressCircle.style.strokeDashoffset = CIRCUMFERENCE;
-        return;
-    }
-    let progress;
-    if (mode === "down") {
-        progress = remainingSeconds / targetSeconds;
-    } else {
-        // Count‑up: progress = elapsed / target
-        progress = remainingSeconds / targetSeconds;
-    }
-    progress = Math.min(1, Math.max(0, progress));
-    const offset = CIRCUMFERENCE * (1 - progress);
-    progressCircle.style.strokeDashoffset = offset;
-
-    // Change circle color based on remaining time (for countdown)
-    if (mode === "down") {
-        if (remainingSeconds <= targetSeconds * 0.1) {
-            progressCircle.style.stroke = '#ef4444'; // red
-        } else if (remainingSeconds <= targetSeconds * 0.3) {
-            progressCircle.style.stroke = '#eab308'; // yellow
-        } else {
-            progressCircle.style.stroke = '#0f172a'; // dark
-        }
-    } else {
-        progressCircle.style.stroke = '#0f172a';
-    }
 }
 function flashColor(color) {
-    const timerDiv = document.querySelector('.timer-text');
+    const timerDiv = document.querySelector('.timer');
     const original = timerDiv.style.color;
     timerDiv.style.color = color;
     setTimeout(() => timerDiv.style.color = original, 400);
@@ -117,6 +85,10 @@ function finish() {
     startPauseBtn.innerHTML = '▶ Start';
     playBeep(880, 1);
     flashColor('#dc2626');
+    const timerDiv = document.querySelector('.timer');
+    timerDiv.style.animation = 'none';
+    timerDiv.offsetHeight;
+    timerDiv.style.animation = 'pulse 0.5s 3';
     drawTimeline();
 }
 function showToast(message) {
@@ -244,7 +216,7 @@ function tick() {
             remainingSeconds = 0;
             finish();
         }
-    } else { // up mode
+    } else {
         if (targetSeconds > 0 && remainingSeconds >= targetSeconds) {
             finish();
             return;
@@ -298,8 +270,6 @@ function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     halfTriggered = false;
     updateDisplay();
     drawTimeline();
-    // Reset circle style
-    progressCircle.style.stroke = '#0f172a';
 }
 function toggleMode() {
     mode = mode === "down" ? "up" : "down";

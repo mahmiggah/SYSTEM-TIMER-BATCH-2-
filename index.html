@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Glass Timer – Circular + Markers</title>
+    <title>Glass Timer – Minimal + Markers</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f8fafc">
@@ -11,15 +11,18 @@
 </head>
 <body>
 <div class="app">
-    <!-- Circular timer (SVG) -->
-    <div class="timer-container">
-        <svg class="progress-ring" width="240" height="240" viewBox="0 0 240 240">
-            <circle class="progress-ring__background" cx="120" cy="120" r="108" fill="none" stroke="#e2e8f0" stroke-width="8" />
-            <circle class="progress-ring__circle" cx="120" cy="120" r="108" fill="none" stroke="#0f172a" stroke-width="8" stroke-linecap="round" transform="rotate(-90 120 120)" />
-        </svg>
-        <div class="timer-text">
-            <span class="timer-hours">00</span>:<span class="timer-minutes">00</span>:<span class="timer-seconds">00</span>
-        </div>
+    <!-- Simple digital timer display -->
+    <div class="timer">
+        <span class="timer-hours">00</span>
+        <span class="timer-colon">:</span>
+        <span class="timer-minutes">00</span>
+        <span class="timer-colon">:</span>
+        <span class="timer-seconds">00</span>
+    </div>
+    <div class="timer-units">
+        <span class="unit">HOURS</span>
+        <span class="unit">MINUTES</span>
+        <span class="unit">SECONDS</span>
     </div>
 
     <!-- Timeline canvas (markers appear as flags) -->
@@ -81,10 +84,10 @@
         <h3 style="text-align: center;">📘 Timer Guide</h3>
         <div style="margin-top: 1rem;">
             <p><strong>⏱️ Set Time</strong> – hours, minutes, seconds.</p>
-            <p><strong>🔄 Count Down / Up</strong> – toggle direction; the circular ring animates accordingly.</p>
-            <p><strong>▶ Start / ⏸ Pause</strong> – single button toggles between start and pause.</p>
+            <p><strong>🔄 Count Down / Up</strong> – toggle direction; timeline reverses accordingly.</p>
+            <p><strong>▶ Start / ⏸ Pause</strong> – single button toggles start/pause.</p>
             <p><strong>🔄 Reset</strong> – resets to the last set duration.</p>
-            <p><strong>🚩 Markers</strong> – add coloured flags (Red, Green, Yellow) on the timeline. When a marker is reached, a toast appears and the flag disappears.</p>
+            <p><strong>🚩 Markers</strong> – add coloured flags (Red, Green, Yellow) on the timeline. When reached, toast appears and flag disappears.</p>
             <p><strong>📱 Mobile & Offline</strong> – fully responsive; install as PWA for offline use.</p>
         </div>
         <div class="modal-buttons" style="margin-top: 1.5rem;">

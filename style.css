@@ -6,7 +6,7 @@
 
 body {
     background: #f8fafc;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #0f172a;
     min-height: 100vh;
     display: flex;
@@ -16,57 +16,56 @@ body {
 }
 
 .app {
-    max-width: 800px;
+    max-width: 600px;
     width: 100%;
     background: white;
     border-radius: 2rem;
     box-shadow: 0 20px 35px -10px rgba(0,0,0,0.05);
     padding: 2rem;
+    text-align: center;
 }
 
-/* Timer display */
-.timer {
-    display: flex;
-    justify-content: center;
-    align-items: baseline;
-    gap: 0.5rem;
-    font-size: 4rem;
+/* Circular timer container */
+.timer-container {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    margin: 0 auto 1rem auto;
+}
+.progress-ring {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+}
+.progress-ring__background {
+    stroke: #e2e8f0;
+}
+.progress-ring__circle {
+    stroke: #0f172a;
+    transition: stroke-dashoffset 0.35s;
+    stroke-dasharray: 679; /* circumference of 2 * pi * 108 ≈ 678.584 */
+    stroke-dashoffset: 0;
+}
+.timer-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
     font-weight: 600;
-    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
-    letter-spacing: 2px;
-    background: white;
-    border-radius: 2rem;
-    padding: 1rem 2rem;
-    margin-bottom: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
     color: #0f172a;
-    text-align: center;
+    white-space: nowrap;
 }
-.timer span {
-    min-width: 1.2em;
-    text-align: center;
-}
-.timer .timer-colon {
-    min-width: auto;
-}
-
-.timer-units {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    font-size: 0.7rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    color: #64748b;
-    margin-bottom: 2rem;
-}
-.timer-units .unit {
-    min-width: 3rem;
+.timer-text span {
+    min-width: 2.5rem;
+    display: inline-block;
     text-align: center;
 }
 
 /* Timeline canvas */
 .timeline-container {
-    margin: 1rem 0;
+    margin: 1.5rem 0;
     background: #f1f5f9;
     border-radius: 1rem;
     padding: 0.5rem;
@@ -78,14 +77,13 @@ canvas {
     border-radius: 0.75rem;
 }
 
-/* Button grid – modern & responsive */
+/* Button grid – responsive */
 .controls {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     gap: 0.75rem;
     margin: 1.5rem 0;
 }
-
 button {
     background: white;
     border: 1px solid #e2e8f0;
@@ -106,19 +104,16 @@ button {
 button:hover {
     background: #f8fafc;
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
 button:active {
     transform: translateY(1px);
 }
-
-/* Special button variants */
-#startBtn {
+#startPauseBtn {
     background: #0f172a;
     color: white;
     border-color: #0f172a;
 }
-#startBtn:hover {
+#startPauseBtn:hover {
     background: #1e293b;
 }
 #modeToggleBtn {
@@ -203,7 +198,7 @@ button:active {
     border: none;
 }
 
-/* Help button (bottom‑right) */
+/* Help floating button */
 .help-corner {
     position: fixed;
     bottom: 1.5rem;
@@ -224,7 +219,7 @@ button:active {
     transform: scale(1.05);
 }
 
-/* Toast message for marker reached */
+/* Toast notification */
 .toast-message {
     position: fixed;
     bottom: 80px;
@@ -248,9 +243,27 @@ button:active {
     100% { opacity: 0; transform: translateX(-50%) translateY(-10px); visibility: hidden; }
 }
 
-/* Pulse animation for finish */
+/* Pulse animation (for finish) */
 @keyframes pulse {
     0% { transform: scale(1); text-shadow: 0 0 0 cyan; }
     50% { transform: scale(1.05); text-shadow: 0 0 8px cyan; color: #0ea5e9; }
     100% { transform: scale(1); text-shadow: 0 0 0 cyan; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 550px) {
+    .timer-container {
+        width: 180px;
+        height: 180px;
+    }
+    .timer-text {
+        font-size: 1.4rem;
+    }
+    .controls {
+        gap: 0.5rem;
+    }
+    button {
+        padding: 0.5rem 0.6rem;
+        font-size: 0.75rem;
+    }
 }

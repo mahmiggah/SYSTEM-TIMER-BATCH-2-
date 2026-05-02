@@ -9,6 +9,7 @@ const modeToggleBtn = document.getElementById('modeToggleBtn');
 const setMarkerBtn = document.getElementById('setMarkerBtn');
 const clearMarkersBtn = document.getElementById('clearMarkersBtn');
 const timelineCanvas = document.getElementById('timelineCanvas');
+const progressCircle = document.querySelector('.progress-ring__circle');
 
 // Modals
 const timeModal = document.getElementById('timeModal');
@@ -37,6 +38,9 @@ let mode = "down";              // "down" or "up"
 let pendingMarkers = [];        // { seconds, colorHex }
 let halfTriggered = false;
 
+// Circumference of the circle (2 * π * 108 ≈ 678.584)
+const CIRCUMFERENCE = 2 * Math.PI * 108;
+
 // ---------- Helper functions ----------
 function formatTime(seconds) {
     const hrs = Math.floor(Math.abs(seconds) / 3600);
@@ -53,9 +57,37 @@ function updateDisplay() {
     timerHoursSpan.textContent = parts.hrs;
     timerMinutesSpan.textContent = parts.mins;
     timerSecondsSpan.textContent = parts.secs;
+    // Update progress ring
+    if (targetSeconds === 0) {
+        progressCircle.style.strokeDashoffset = CIRCUMFERENCE;
+        return;
+    }
+    let progress;
+    if (mode === "down") {
+        progress = remainingSeconds / targetSeconds;
+    } else {
+        // Count‑up: progress = elapsed / target
+        progress = remainingSeconds / targetSeconds;
+    }
+    progress = Math.min(1, Math.max(0, progress));
+    const offset = CIRCUMFERENCE * (1 - progress);
+    progressCircle.style.strokeDashoffset = offset;
+
+    // Change circle color based on remaining time (for countdown)
+    if (mode === "down") {
+        if (remainingSeconds <= targetSeconds * 0.1) {
+            progressCircle.style.stroke = '#ef4444'; // red
+        } else if (remainingSeconds <= targetSeconds * 0.3) {
+            progressCircle.style.stroke = '#eab308'; // yellow
+        } else {
+            progressCircle.style.stroke = '#0f172a'; // dark
+        }
+    } else {
+        progressCircle.style.stroke = '#0f172a';
+    }
 }
 function flashColor(color) {
-    const timerDiv = document.querySelector('.timer');
+    const timerDiv = document.querySelector('.timer-text');
     const original = timerDiv.style.color;
     timerDiv.style.color = color;
     setTimeout(() => timerDiv.style.color = original, 400);
@@ -85,10 +117,6 @@ function finish() {
     startPauseBtn.innerHTML = '▶ Start';
     playBeep(880, 1);
     flashColor('#dc2626');
-    const timerDiv = document.querySelector('.timer');
-    timerDiv.style.animation = 'none';
-    timerDiv.offsetHeight;
-    timerDiv.style.animation = 'pulse 0.5s 3';
     drawTimeline();
 }
 function showToast(message) {
@@ -99,7 +127,7 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// ---------- Timeline drawing ----------
+// ---------- Timeline drawing (mirrored for count‑up) ----------
 function drawTimeline() {
     if (!timelineCanvas) return;
     const canvas = timelineCanvas;
@@ -113,7 +141,6 @@ function drawTimeline() {
     ctx.clearRect(0, 0, width, height);
     if (targetSeconds === 0) return;
 
-    // Base line
     ctx.beginPath();
     ctx.moveTo(10, height / 2);
     ctx.lineTo(width - 10, height / 2);
@@ -121,13 +148,10 @@ function drawTimeline() {
     ctx.strokeStyle = '#cbd5e1';
     ctx.stroke();
 
-    // Calculate progress and marker positions based on mode
     let progress;
     if (mode === "down") {
-        // Countdown: 0 at left (start), 1 at right (finish)
         progress = (targetSeconds - remainingSeconds) / targetSeconds;
     } else {
-        // Count‑up: 1 at left (start), 0 at right (finish) → reverses direction
         progress = 1 - (remainingSeconds / targetSeconds);
     }
     progress = Math.min(1, Math.max(0, progress));
@@ -141,24 +165,20 @@ function drawTimeline() {
     ctx.fillStyle = 'white';
     ctx.fill();
 
-    // Draw markers
     for (let marker of pendingMarkers) {
         let markerPos;
         if (mode === "down") {
             markerPos = marker.seconds / targetSeconds;
         } else {
-            // For count‑up, reverse marker position: 1 at left, 0 at right
             markerPos = 1 - (marker.seconds / targetSeconds);
         }
         const x = 10 + markerPos * (width - 20);
-        // triangle flag
         ctx.beginPath();
         ctx.moveTo(x, height / 2 - 8);
         ctx.lineTo(x - 4, height / 2);
         ctx.lineTo(x + 4, height / 2);
         ctx.fillStyle = marker.colorHex;
         ctx.fill();
-        // base circle
         ctx.beginPath();
         ctx.arc(x, height / 2, 3, 0, 2 * Math.PI);
         ctx.fillStyle = marker.colorHex;
@@ -195,7 +215,6 @@ function triggerMarker(markerSec) {
     const idx = pendingMarkers.findIndex(m => m.seconds === markerSec);
     if (idx === -1) return;
     const marker = pendingMarkers[idx];
-    console.log(`Triggering marker at ${markerSec} seconds, color: ${marker.colorHex}`);
     const timeStr = formatTime(marker.seconds);
     const formatted = `${timeStr.hrs}:${timeStr.mins}:${timeStr.secs}`;
     showToast(`✅ Marker reached: ${formatted}`);
@@ -220,11 +239,12 @@ function tick() {
             flashColor('#eab308');
         }
         const markerHit = pendingMarkers.find(m => m.seconds === remainingSeconds);
-        if (markerHit) {
-             console.log(`Tick at ${remainingSeconds}, marker found:`, markerHit);
-             triggerMarker(markerHit.seconds);
-         }
-    } else {
+        if (markerHit) triggerMarker(markerHit.seconds);
+        if (remainingSeconds <= 0) {
+            remainingSeconds = 0;
+            finish();
+        }
+    } else { // up mode
         if (targetSeconds > 0 && remainingSeconds >= targetSeconds) {
             finish();
             return;
@@ -278,7 +298,8 @@ function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     halfTriggered = false;
     updateDisplay();
     drawTimeline();
-    document.querySelector('.timer').style.animation = '';
+    // Reset circle style
+    progressCircle.style.stroke = '#0f172a';
 }
 function toggleMode() {
     mode = mode === "down" ? "up" : "down";
@@ -309,8 +330,6 @@ resetBtn.addEventListener('click', () => {
     halfTriggered = false;
     updateDisplay();
     drawTimeline();
-    document.querySelector('.timer').style.animation = '';
-    document.querySelector('.timer').style.color = '';
 });
 modalConfirm.addEventListener('click', () => {
     setTimerFromHoursMinutesSeconds(modalHours.value, modalMinutes.value, modalSeconds.value);

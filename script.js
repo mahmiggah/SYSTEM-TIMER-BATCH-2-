@@ -1,4 +1,5 @@
 // ---------- DOM elements ----------
+const settingsGroup = document.querySelector('.settings-group');
 const timerHoursSpan = document.querySelector('.timer-hours');
 const timerMinutesSpan = document.querySelector('.timer-minutes');
 const timerSecondsSpan = document.querySelector('.timer-seconds');
@@ -90,6 +91,8 @@ function finish() {
     timerDiv.offsetHeight;
     timerDiv.style.animation = 'pulse 0.5s 3';
     drawTimeline();
+    // Show settings group again
+    if (settingsGroup) settingsGroup.classList.remove('hidden');
 }
 function showToast(message) {
     const toast = document.createElement('div');
@@ -242,12 +245,16 @@ function startTimer() {
     flashColor('#10b981');
     intervalId = setInterval(() => tick(), 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
+    // Hide settings group
+    if (settingsGroup) settingsGroup.classList.add('hidden');
 }
 function pauseTimer() {
     if (intervalId === null) return;
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
     drawTimeline();
+    // Show settings group
+    if (settingsGroup) settingsGroup.classList.remove('hidden');
 }
 function toggleStartPause() {
     if (intervalId === null) {
@@ -259,6 +266,7 @@ function toggleStartPause() {
 function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
+    if (settingsGroup) settingsGroup.classList.remove('hidden');  // <-- add this line
     let h = parseInt(hours) || 0;
     let m = parseInt(minutes) || 0;
     let s = parseInt(seconds) || 0;
@@ -300,6 +308,8 @@ resetBtn.addEventListener('click', () => {
     halfTriggered = false;
     updateDisplay();
     drawTimeline();
+    // Show settings group
+    if (settingsGroup) settingsGroup.classList.remove('hidden');
 });
 modalConfirm.addEventListener('click', () => {
     setTimerFromHoursMinutesSeconds(modalHours.value, modalMinutes.value, modalSeconds.value);

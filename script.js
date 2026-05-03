@@ -1,28 +1,19 @@
-// ---------- DOM elements ----------
+// DOM elements
 const timerHoursSpan = document.querySelector('.timer-hours');
 const timerMinutesSpan = document.querySelector('.timer-minutes');
 const timerSecondsSpan = document.querySelector('.timer-seconds');
 const startPauseBtn = document.getElementById('startPauseBtn');
 const resetBtn = document.getElementById('resetBtn');
+const settingsBtn = document.getElementById('settingsBtn');
 const timelineCanvas = document.getElementById('timelineCanvas');
 
-// Advanced group (main screen, visible when timer not running)
-const advancedGroup = document.getElementById('advancedGroup');
+// Settings modal and its buttons
+const settingsModal = document.getElementById('settingsModal');
+const closeSettingsBtn = document.getElementById('closeSettingsBtn');
 const setTimeBtn = document.getElementById('setTimeBtn');
 const modeToggleBtn = document.getElementById('modeToggleBtn');
 const setMarkerBtn = document.getElementById('setMarkerBtn');
 const clearMarkersBtn = document.getElementById('clearMarkersBtn');
-
-// Settings button (visible when timer is running)
-const settingsBtn = document.getElementById('settingsBtn');
-
-// Modals
-const settingsModal = document.getElementById('settingsModal');
-const closeSettingsBtn = document.getElementById('closeSettingsBtn');
-const modalSetTimeBtn = document.getElementById('modalSetTimeBtn');
-const modalModeToggleBtn = document.getElementById('modalModeToggleBtn');
-const modalSetMarkerBtn = document.getElementById('modalSetMarkerBtn');
-const modalClearMarkersBtn = document.getElementById('modalClearMarkersBtn');
 
 const timeModal = document.getElementById('timeModal');
 const modalHours = document.getElementById('modalHours');
@@ -42,25 +33,15 @@ const helpBtn = document.getElementById('helpBtn');
 const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
 
-// ---------- Timer state ----------
+// Timer state
 let intervalId = null;
 let remainingSeconds = 0;
 let targetSeconds = 0;
-let mode = "down";              // "down" or "up"
-let pendingMarkers = [];        // { seconds, fixedColor }
+let mode = "down";
+let pendingMarkers = [];
 let halfTriggered = false;
 
-// ---------- UI toggles ----------
-function showAdvancedGroup() {
-    advancedGroup.style.display = 'flex';
-    settingsBtn.style.display = 'none';
-}
-function showSettingsButton() {
-    advancedGroup.style.display = 'none';
-    settingsBtn.style.display = 'inline-flex';
-}
-
-// ---------- Helper functions ----------
+// Helpers
 function formatTime(seconds) {
     const hrs = Math.floor(Math.abs(seconds) / 3600);
     const mins = Math.floor((Math.abs(seconds) % 3600) / 60);
@@ -113,7 +94,6 @@ function finish() {
     timerDiv.offsetHeight;
     timerDiv.style.animation = 'pulse 0.5s 3';
     drawTimeline();
-    showAdvancedGroup(); // restore advanced buttons
 }
 function showToast(message) {
     const toast = document.createElement('div');
@@ -123,7 +103,7 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// ---------- Timeline drawing (fixed marker colours, left-to-right) ----------
+// Timeline drawing
 function drawTimeline() {
     if (!timelineCanvas) return;
     const canvas = timelineCanvas;
@@ -177,7 +157,7 @@ function drawTimeline() {
     }
 }
 
-// ---------- Marker management ----------
+// Marker management
 function addMarker(hours, minutes, seconds, fixedColor) {
     let h = parseInt(hours) || 0;
     let m = parseInt(minutes) || 0;
@@ -215,7 +195,7 @@ function triggerMarker(markerSec) {
     flashColor('#dc2626');
 }
 
-// ---------- Timer core ----------
+// Timer core
 function tick() {
     if (intervalId === null) return;
 
@@ -261,21 +241,16 @@ function startTimer() {
     flashColor('#10b981');
     intervalId = setInterval(() => tick(), 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
-    showSettingsButton(); // hide advanced group, show Settings button
 }
 function pauseTimer() {
     if (intervalId === null) return;
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
     drawTimeline();
-    showAdvancedGroup(); // restore advanced buttons
 }
 function toggleStartPause() {
-    if (intervalId === null) {
-        startTimer();
-    } else {
-        pauseTimer();
-    }
+    if (intervalId === null) startTimer();
+    else pauseTimer();
 }
 function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     stopTimer();
@@ -291,12 +266,10 @@ function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     halfTriggered = false;
     updateDisplay();
     drawTimeline();
-    showAdvancedGroup(); // after setting new time, show advanced group
 }
 function toggleMode() {
     mode = mode === "down" ? "up" : "down";
     modeToggleBtn.textContent = mode === "down" ? "⬇️ Count Down" : "⬆️ Count Up";
-    if (modalModeToggleBtn) modalModeToggleBtn.textContent = modeToggleBtn.textContent;
     const curr = mode === "down" ? targetSeconds : remainingSeconds;
     const hrs = Math.floor(curr / 3600);
     const mins = Math.floor((curr % 3600) / 60);
@@ -304,32 +277,28 @@ function toggleMode() {
     setTimerFromHoursMinutesSeconds(hrs, mins, secs);
 }
 
-// ---------- Modal handlers ----------
-function openSettingsModal() {
-    settingsModal.style.display = 'flex';
-}
-function closeSettingsModal() {
-    settingsModal.style.display = 'none';
-}
+// Modal handlers
+function openSettingsModal() { settingsModal.style.display = 'flex'; }
+function closeSettingsModal() { settingsModal.style.display = 'none'; }
 settingsBtn.addEventListener('click', openSettingsModal);
 closeSettingsBtn.addEventListener('click', closeSettingsModal);
 settingsModal.addEventListener('click', (e) => {
     if (e.target === settingsModal) closeSettingsModal();
 });
 
-modalSetTimeBtn.addEventListener('click', () => {
+setTimeBtn.addEventListener('click', () => {
     closeSettingsModal();
     openTimeModal();
 });
-modalModeToggleBtn.addEventListener('click', () => {
+modeToggleBtn.addEventListener('click', () => {
     toggleMode();
     closeSettingsModal();
 });
-modalSetMarkerBtn.addEventListener('click', () => {
+setMarkerBtn.addEventListener('click', () => {
     closeSettingsModal();
     openMarkerModal();
 });
-modalClearMarkersBtn.addEventListener('click', () => {
+clearMarkersBtn.addEventListener('click', () => {
     clearAllMarkers();
     closeSettingsModal();
 });
@@ -343,7 +312,6 @@ function openTimeModal() {
     modalHours.focus();
 }
 function closeTimeModal() { timeModal.style.display = 'none'; }
-setTimeBtn.addEventListener('click', openTimeModal);
 modalConfirm.addEventListener('click', () => {
     setTimerFromHoursMinutesSeconds(modalHours.value, modalMinutes.value, modalSeconds.value);
     closeTimeModal();
@@ -363,7 +331,6 @@ function openMarkerModal() {
     markerHours.focus();
 }
 function closeMarkerModal() { markerModal.style.display = 'none'; }
-setMarkerBtn.addEventListener('click', openMarkerModal);
 markerConfirm.addEventListener('click', () => {
     const selectedColor = document.querySelector('input[name="markerColor"]:checked').value;
     addMarker(markerHours.value, markerMinutes.value, markerSecs.value, selectedColor);
@@ -371,8 +338,6 @@ markerConfirm.addEventListener('click', () => {
 });
 markerCancel.addEventListener('click', closeMarkerModal);
 markerModal.addEventListener('click', (e) => { if (e.target === markerModal) closeMarkerModal(); });
-
-clearMarkersBtn.addEventListener('click', clearAllMarkers);
 
 resetBtn.addEventListener('click', () => {
     stopTimer();
@@ -382,13 +347,10 @@ resetBtn.addEventListener('click', () => {
     halfTriggered = false;
     updateDisplay();
     drawTimeline();
-    showAdvancedGroup(); // restore advanced buttons
 });
 
-modeToggleBtn.addEventListener('click', toggleMode);
 startPauseBtn.addEventListener('click', toggleStartPause);
 
-// Help modal
 if (helpBtn && helpModal) {
     helpBtn.addEventListener('click', () => helpModal.style.display = 'flex');
     closeHelpBtn.addEventListener('click', () => helpModal.style.display = 'none');
@@ -400,6 +362,4 @@ remainingSeconds = 0;
 targetSeconds = 0;
 updateDisplay();
 drawTimeline();
-showAdvancedGroup(); // advanced group visible, Settings button hidden
-
 window.addEventListener('resize', () => drawTimeline());

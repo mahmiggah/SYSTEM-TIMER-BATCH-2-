@@ -1,21 +1,29 @@
-// DOM elements
+// ---------- DOM elements ----------
 const timerHoursSpan = document.querySelector('.timer-hours');
 const timerMinutesSpan = document.querySelector('.timer-minutes');
 const timerSecondsSpan = document.querySelector('.timer-seconds');
 const startPauseBtn = document.getElementById('startPauseBtn');
 const resetBtn = document.getElementById('resetBtn');
-const settingsBtn = document.getElementById('settingsBtn');
 const timelineCanvas = document.getElementById('timelineCanvas');
 
-// Settings modal and its buttons
-const settingsModal = document.getElementById('settingsModal');
-const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+// Advanced group (main screen, visible when timer not running)
+const advancedGroup = document.getElementById('advancedGroup');
 const setTimeBtn = document.getElementById('setTimeBtn');
 const modeToggleBtn = document.getElementById('modeToggleBtn');
 const setMarkerBtn = document.getElementById('setMarkerBtn');
 const clearMarkersBtn = document.getElementById('clearMarkersBtn');
 
-// Set Time modal
+// Settings button (visible when timer is running)
+const settingsBtn = document.getElementById('settingsBtn');
+
+// Modals
+const settingsModal = document.getElementById('settingsModal');
+const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+const modalSetTimeBtn = document.getElementById('modalSetTimeBtn');
+const modalModeToggleBtn = document.getElementById('modalModeToggleBtn');
+const modalSetMarkerBtn = document.getElementById('modalSetMarkerBtn');
+const modalClearMarkersBtn = document.getElementById('modalClearMarkersBtn');
+
 const timeModal = document.getElementById('timeModal');
 const modalHours = document.getElementById('modalHours');
 const modalMinutes = document.getElementById('modalMinutes');
@@ -23,7 +31,6 @@ const modalSeconds = document.getElementById('modalSeconds');
 const modalConfirm = document.getElementById('modalConfirmBtn');
 const modalCancel = document.getElementById('modalCancelBtn');
 
-// Marker modal
 const markerModal = document.getElementById('markerModal');
 const markerHours = document.getElementById('markerHours');
 const markerMinutes = document.getElementById('markerMinutes');
@@ -31,7 +38,6 @@ const markerSecs = document.getElementById('markerSeconds');
 const markerConfirm = document.getElementById('markerConfirmBtn');
 const markerCancel = document.getElementById('markerCancelBtn');
 
-// Help modal (optional)
 const helpBtn = document.getElementById('helpBtn');
 const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
@@ -41,8 +47,18 @@ let intervalId = null;
 let remainingSeconds = 0;
 let targetSeconds = 0;
 let mode = "down";              // "down" or "up"
-let pendingMarkers = [];        // each { seconds, fixedColor }
+let pendingMarkers = [];        // { seconds, fixedColor }
 let halfTriggered = false;
+
+// ---------- UI toggles ----------
+function showAdvancedGroup() {
+    advancedGroup.style.display = 'flex';
+    settingsBtn.style.display = 'none';
+}
+function showSettingsButton() {
+    advancedGroup.style.display = 'none';
+    settingsBtn.style.display = 'inline-flex';
+}
 
 // ---------- Helper functions ----------
 function formatTime(seconds) {
@@ -97,6 +113,7 @@ function finish() {
     timerDiv.offsetHeight;
     timerDiv.style.animation = 'pulse 0.5s 3';
     drawTimeline();
+    showAdvancedGroup(); // restore advanced buttons
 }
 function showToast(message) {
     const toast = document.createElement('div');
@@ -106,7 +123,7 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// ---------- Timeline drawing (fixed marker colours, left-to-right for both modes) ----------
+// ---------- Timeline drawing (fixed marker colours, left-to-right) ----------
 function drawTimeline() {
     if (!timelineCanvas) return;
     const canvas = timelineCanvas;
@@ -120,7 +137,6 @@ function drawTimeline() {
     ctx.clearRect(0, 0, width, height);
     if (targetSeconds === 0) return;
 
-    // Draw base line
     ctx.beginPath();
     ctx.moveTo(10, height / 2);
     ctx.lineTo(width - 10, height / 2);
@@ -128,7 +144,6 @@ function drawTimeline() {
     ctx.strokeStyle = '#cbd5e1';
     ctx.stroke();
 
-    // Current progress (0 = start, 1 = finish)
     let progress;
     if (mode === "down") {
         progress = (targetSeconds - remainingSeconds) / targetSeconds;
@@ -146,22 +161,18 @@ function drawTimeline() {
     ctx.fillStyle = 'white';
     ctx.fill();
 
-    // Markers: placed according to seconds / targetSeconds (left = start)
     for (let marker of pendingMarkers) {
         let markerPos = marker.seconds / targetSeconds;
         const x = 10 + markerPos * (width - 20);
-        const markerColor = marker.fixedColor;   // user-selected colour
-        // triangle flag
         ctx.beginPath();
         ctx.moveTo(x, height / 2 - 8);
         ctx.lineTo(x - 4, height / 2);
         ctx.lineTo(x + 4, height / 2);
-        ctx.fillStyle = markerColor;
+        ctx.fillStyle = marker.fixedColor;
         ctx.fill();
-        // base circle
         ctx.beginPath();
         ctx.arc(x, height / 2, 3, 0, 2 * Math.PI);
-        ctx.fillStyle = markerColor;
+        ctx.fillStyle = marker.fixedColor;
         ctx.fill();
     }
 }
@@ -250,12 +261,14 @@ function startTimer() {
     flashColor('#10b981');
     intervalId = setInterval(() => tick(), 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
+    showSettingsButton(); // hide advanced group, show Settings button
 }
 function pauseTimer() {
     if (intervalId === null) return;
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
     drawTimeline();
+    showAdvancedGroup(); // restore advanced buttons
 }
 function toggleStartPause() {
     if (intervalId === null) {
@@ -278,10 +291,12 @@ function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     halfTriggered = false;
     updateDisplay();
     drawTimeline();
+    showAdvancedGroup(); // after setting new time, show advanced group
 }
 function toggleMode() {
     mode = mode === "down" ? "up" : "down";
     modeToggleBtn.textContent = mode === "down" ? "⬇️ Count Down" : "⬆️ Count Up";
+    if (modalModeToggleBtn) modalModeToggleBtn.textContent = modeToggleBtn.textContent;
     const curr = mode === "down" ? targetSeconds : remainingSeconds;
     const hrs = Math.floor(curr / 3600);
     const mins = Math.floor((curr % 3600) / 60);
@@ -302,19 +317,19 @@ settingsModal.addEventListener('click', (e) => {
     if (e.target === settingsModal) closeSettingsModal();
 });
 
-setTimeBtn.addEventListener('click', () => {
+modalSetTimeBtn.addEventListener('click', () => {
     closeSettingsModal();
     openTimeModal();
 });
-modeToggleBtn.addEventListener('click', () => {
+modalModeToggleBtn.addEventListener('click', () => {
     toggleMode();
     closeSettingsModal();
 });
-setMarkerBtn.addEventListener('click', () => {
+modalSetMarkerBtn.addEventListener('click', () => {
     closeSettingsModal();
     openMarkerModal();
 });
-clearMarkersBtn.addEventListener('click', () => {
+modalClearMarkersBtn.addEventListener('click', () => {
     clearAllMarkers();
     closeSettingsModal();
 });
@@ -328,6 +343,7 @@ function openTimeModal() {
     modalHours.focus();
 }
 function closeTimeModal() { timeModal.style.display = 'none'; }
+setTimeBtn.addEventListener('click', openTimeModal);
 modalConfirm.addEventListener('click', () => {
     setTimerFromHoursMinutesSeconds(modalHours.value, modalMinutes.value, modalSeconds.value);
     closeTimeModal();
@@ -347,6 +363,7 @@ function openMarkerModal() {
     markerHours.focus();
 }
 function closeMarkerModal() { markerModal.style.display = 'none'; }
+setMarkerBtn.addEventListener('click', openMarkerModal);
 markerConfirm.addEventListener('click', () => {
     const selectedColor = document.querySelector('input[name="markerColor"]:checked').value;
     addMarker(markerHours.value, markerMinutes.value, markerSecs.value, selectedColor);
@@ -354,6 +371,8 @@ markerConfirm.addEventListener('click', () => {
 });
 markerCancel.addEventListener('click', closeMarkerModal);
 markerModal.addEventListener('click', (e) => { if (e.target === markerModal) closeMarkerModal(); });
+
+clearMarkersBtn.addEventListener('click', clearAllMarkers);
 
 resetBtn.addEventListener('click', () => {
     stopTimer();
@@ -363,21 +382,24 @@ resetBtn.addEventListener('click', () => {
     halfTriggered = false;
     updateDisplay();
     drawTimeline();
+    showAdvancedGroup(); // restore advanced buttons
 });
 
+modeToggleBtn.addEventListener('click', toggleMode);
 startPauseBtn.addEventListener('click', toggleStartPause);
 
-// Help modal (optional)
+// Help modal
 if (helpBtn && helpModal) {
     helpBtn.addEventListener('click', () => helpModal.style.display = 'flex');
     closeHelpBtn.addEventListener('click', () => helpModal.style.display = 'none');
     helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.style.display = 'none'; });
 }
 
-// ---------- Initial values ----------
+// Initial
 remainingSeconds = 0;
 targetSeconds = 0;
 updateDisplay();
 drawTimeline();
+showAdvancedGroup(); // advanced group visible, Settings button hidden
 
 window.addEventListener('resize', () => drawTimeline());

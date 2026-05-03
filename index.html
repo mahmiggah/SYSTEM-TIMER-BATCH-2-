@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Glass Timer – Minimal + Markers</title>
+    <title>Glass Timer – Settings Modal</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f8fafc">
@@ -11,43 +11,49 @@
 </head>
 <body>
 <div class="app">
-    <!-- Simple digital timer display -->
-    <div class="timer">
-        <span class="timer-hours">00</span>
-        <span class="timer-colon">:</span>
-        <span class="timer-minutes">00</span>
-        <span class="timer-colon">:</span>
-        <span class="timer-seconds">00</span>
-    </div>
-    <div class="timer-units">
-        <span class="unit">HOURS</span>
-        <span class="unit">MINUTES</span>
-        <span class="unit">SECONDS</span>
+    <!-- Circular timer SVG -->
+    <div class="timer-container">
+        <svg class="progress-ring" width="240" height="240" viewBox="0 0 240 240">
+            <circle class="progress-ring__background" cx="120" cy="120" r="108" fill="none" stroke="#e2e8f0" stroke-width="8" />
+            <circle class="progress-ring__circle" cx="120" cy="120" r="108" fill="none" stroke="#0f172a" stroke-width="8" stroke-linecap="round" transform="rotate(-90 120 120)" />
+        </svg>
+        <div class="timer-text">
+            <span class="timer-hours">00</span>:<span class="timer-minutes">00</span>:<span class="timer-seconds">00</span>
+        </div>
     </div>
 
-    <!-- Timeline canvas (markers appear as flags) -->
+    <!-- Timeline canvas (markers) -->
     <div class="timeline-container">
         <canvas id="timelineCanvas" width="800" height="50" style="width:100%; height:50px"></canvas>
     </div>
 
-    <!-- Control buttons (responsive grid) -->
-   <div class="controls">
-    <div class="settings-group">
-        <button id="setTimeBtn">⏱️ Set Time</button>
-        <button id="modeToggleBtn">⬇️ Count Down</button>
-        <button id="setMarkerBtn">🚩 Set Marker</button>
-        <button id="clearMarkersBtn">🗑️ Clear All Markers</button>
-    </div>
-    <div class="runtime-group">
-        <button id="startPauseBtn">▶ Start</button>
-        <button id="resetBtn">🔄 Reset</button>
+    <!-- Main controls: only Start, Reset, Settings -->
+    <div class="controls">
+        <div class="runtime-group">
+            <button id="startPauseBtn">▶ Start</button>
+            <button id="resetBtn">🔄 Reset</button>
+            <button id="settingsBtn">⚙️ Settings</button>
+        </div>
     </div>
 </div>
 
-<!-- Floating help button -->
-<div id="helpBtn" class="help-corner" title="User Guide">❓</div>
+<!-- Settings Modal (hidden by default) -->
+<div id="settingsModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <h3>Timer Settings</h3>
+        <div class="settings-modal-buttons">
+            <button id="setTimeBtn">⏱️ Set Time</button>
+            <button id="modeToggleBtn">⬇️ Count Down</button>
+            <button id="setMarkerBtn">🚩 Set Marker</button>
+            <button id="clearMarkersBtn">🗑️ Clear All Markers</button>
+        </div>
+        <div class="modal-buttons" style="margin-top: 1rem;">
+            <button id="closeSettingsBtn">Close</button>
+        </div>
+    </div>
+</div>
 
-<!-- Set Time Modal -->
+<!-- Set Time Modal (unchanged) -->
 <div id="timeModal" class="modal">
     <div class="modal-content">
         <h3>Set Timer</h3>
@@ -60,7 +66,7 @@
     </div>
 </div>
 
-<!-- Marker Modal with RGY color picker -->
+<!-- Marker Modal (unchanged) -->
 <div id="markerModal" class="modal">
     <div class="modal-content">
         <h3>Add Marker</h3>
@@ -81,23 +87,24 @@
     </div>
 </div>
 
-<!-- Help Modal -->
+<!-- Help Modal (unchanged) -->
 <div id="helpModal" class="modal">
     <div class="modal-content" style="max-width: 500px; text-align: left;">
         <h3 style="text-align: center;">📘 Timer Guide</h3>
         <div style="margin-top: 1rem;">
-            <p><strong>⏱️ Set Time</strong> – hours, minutes, seconds.</p>
-            <p><strong>🔄 Count Down / Up</strong> – toggle direction; timeline reverses accordingly.</p>
-            <p><strong>▶ Start / ⏸ Pause</strong> – single button toggles start/pause.</p>
-            <p><strong>🔄 Reset</strong> – resets to the last set duration.</p>
-            <p><strong>🚩 Markers</strong> – add coloured flags (Red, Green, Yellow) on the timeline. When reached, toast appears and flag disappears.</p>
-            <p><strong>📱 Mobile & Offline</strong> – fully responsive; install as PWA for offline use.</p>
+            <p><strong>⏱️ Set Time</strong> – via Settings modal.</p>
+            <p><strong>🔄 Count Down / Up</strong> – toggle in Settings.</p>
+            <p><strong>🚩 Markers</strong> – add coloured flags; toast on reach.</p>
+            <p><strong>⚙️ Settings button</strong> – opens menu with all controls; it hides while timer runs.</p>
         </div>
         <div class="modal-buttons" style="margin-top: 1.5rem;">
             <button id="closeHelpBtn" style="background:#0f172a; color:white;">Got it</button>
         </div>
     </div>
 </div>
+
+<!-- Floating help button -->
+<div id="helpBtn" class="help-corner" title="User Guide">❓</div>
 
 <script src="script.js"></script>
 <script>

@@ -4,16 +4,25 @@ const timerMinutesSpan = document.querySelector('.timer-minutes');
 const timerSecondsSpan = document.querySelector('.timer-seconds');
 const startPauseBtn = document.getElementById('startPauseBtn');
 const resetBtn = document.getElementById('resetBtn');
-const settingsBtn = document.getElementById('settingsBtn');
 const timelineCanvas = document.getElementById('timelineCanvas');
 
-// Modals
-const settingsModal = document.getElementById('settingsModal');
-const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+// Advanced buttons (visible when timer not running)
+const advancedGroup = document.getElementById('advancedButtons');
 const setTimeBtn = document.getElementById('setTimeBtn');
 const modeToggleBtn = document.getElementById('modeToggleBtn');
 const setMarkerBtn = document.getElementById('setMarkerBtn');
 const clearMarkersBtn = document.getElementById('clearMarkersBtn');
+
+// Settings button (visible only when timer is running)
+const settingsBtn = document.getElementById('settingsBtn');
+
+// Modals
+const settingsModal = document.getElementById('settingsModal');
+const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+const modalSetTimeBtn = document.getElementById('modalSetTimeBtn');
+const modalModeToggleBtn = document.getElementById('modalModeToggleBtn');
+const modalSetMarkerBtn = document.getElementById('modalSetMarkerBtn');
+const modalClearMarkersBtn = document.getElementById('modalClearMarkersBtn');
 
 const timeModal = document.getElementById('timeModal');
 const modalHours = document.getElementById('modalHours');
@@ -38,8 +47,18 @@ let intervalId = null;
 let remainingSeconds = 0;
 let targetSeconds = 0;
 let mode = "down";              // "down" or "up"
-let pendingMarkers = [];        // { seconds, fixedColor }   (fixedColor used only for marker badge)
+let pendingMarkers = [];        // { seconds, fixedColor }
 let halfTriggered = false;
+
+// ---------- UI toggle: hide advanced buttons, show Settings button ----------
+function showSettingsButton() {
+    advancedGroup.style.display = 'none';
+    settingsBtn.style.display = 'inline-flex';
+}
+function showAdvancedButtons() {
+    advancedGroup.style.display = 'flex';
+    settingsBtn.style.display = 'none';
+}
 
 // ---------- Helper functions ----------
 function formatTime(seconds) {
@@ -94,6 +113,7 @@ function finish() {
     timerDiv.offsetHeight;
     timerDiv.style.animation = 'pulse 0.5s 3';
     drawTimeline();
+    showAdvancedButtons();   // restore advanced controls
 }
 function showToast(message) {
     const toast = document.createElement('div');
@@ -103,10 +123,8 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// ---------- Timeline drawing with dynamic marker colours (green -> yellow -> red) ----------
+// ---------- Timeline drawing with dynamic marker colours ----------
 function getMarkerColor(distancePercent) {
-    // distancePercent = how far the current time is from the marker (0..1)
-    // 0 = exactly at marker, 1 = far away
     if (distancePercent <= 0.1) return '#ef4444';   // red (very close)
     if (distancePercent <= 0.3) return '#eab308';   // yellow (approaching)
     return '#10b981';                               // green (far)
@@ -124,7 +142,6 @@ function drawTimeline() {
     ctx.clearRect(0, 0, width, height);
     if (targetSeconds === 0) return;
 
-    // Base line
     ctx.beginPath();
     ctx.moveTo(10, height / 2);
     ctx.lineTo(width - 10, height / 2);
@@ -132,7 +149,6 @@ function drawTimeline() {
     ctx.strokeStyle = '#cbd5e1';
     ctx.stroke();
 
-    // Current position
     let progress;
     if (mode === "down") {
         progress = (targetSeconds - remainingSeconds) / targetSeconds;
@@ -150,7 +166,6 @@ function drawTimeline() {
     ctx.fillStyle = 'white';
     ctx.fill();
 
-    // Draw markers with dynamic colours based on distance to current time
     for (let marker of pendingMarkers) {
         let markerPos;
         if (mode === "down") {
@@ -159,21 +174,14 @@ function drawTimeline() {
             markerPos = 1 - (marker.seconds / targetSeconds);
         }
         const x = 10 + markerPos * (width - 20);
-        // Calculate distance from current position (0..1)
         let distance = Math.abs(progress - markerPos);
-        if (mode === "up") {
-            // in count-up, markers are reached when progress passes them; distance is the difference
-            distance = Math.abs(progress - markerPos);
-        }
         const markerColor = getMarkerColor(distance);
-        // triangle flag
         ctx.beginPath();
         ctx.moveTo(x, height / 2 - 8);
         ctx.lineTo(x - 4, height / 2);
         ctx.lineTo(x + 4, height / 2);
         ctx.fillStyle = markerColor;
         ctx.fill();
-        // base circle
         ctx.beginPath();
         ctx.arc(x, height / 2, 3, 0, 2 * Math.PI);
         ctx.fillStyle = markerColor;
@@ -216,7 +224,7 @@ function triggerMarker(markerSec) {
     pendingMarkers.splice(idx, 1);
     drawTimeline();
     playBeep(1200, 0.3);
-    flashColor('#dc2626');   // red flash for marker hit
+    flashColor('#dc2626');
 }
 
 // ---------- Timer core ----------
@@ -265,12 +273,14 @@ function startTimer() {
     flashColor('#10b981');
     intervalId = setInterval(() => tick(), 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
+    showSettingsButton();   // collapse advanced buttons into Settings button
 }
 function pauseTimer() {
     if (intervalId === null) return;
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
     drawTimeline();
+    showAdvancedButtons();  // restore advanced buttons
 }
 function toggleStartPause() {
     if (intervalId === null) {
@@ -293,10 +303,12 @@ function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     halfTriggered = false;
     updateDisplay();
     drawTimeline();
+    showAdvancedButtons();  // after setting new time, show advanced buttons
 }
 function toggleMode() {
     mode = mode === "down" ? "up" : "down";
     modeToggleBtn.textContent = mode === "down" ? "⬇️ Count Down" : "⬆️ Count Up";
+    if (modalModeToggleBtn) modalModeToggleBtn.textContent = modeToggleBtn.textContent;
     const curr = mode === "down" ? targetSeconds : remainingSeconds;
     const hrs = Math.floor(curr / 3600);
     const mins = Math.floor((curr % 3600) / 60);
@@ -304,7 +316,8 @@ function toggleMode() {
     setTimerFromHoursMinutesSeconds(hrs, mins, secs);
 }
 
-// ---------- Modal handlers ----------
+// ---------- Modal Handlers ----------
+// Settings modal (used when timer is running)
 function openSettingsModal() {
     settingsModal.style.display = 'flex';
 }
@@ -317,10 +330,25 @@ settingsModal.addEventListener('click', (e) => {
     if (e.target === settingsModal) closeSettingsModal();
 });
 
-setTimeBtn.addEventListener('click', () => {
+// Modal buttons call the same actions
+modalSetTimeBtn.addEventListener('click', () => {
     closeSettingsModal();
     openTimeModal();
 });
+modalModeToggleBtn.addEventListener('click', () => {
+    toggleMode();
+    closeSettingsModal();
+});
+modalSetMarkerBtn.addEventListener('click', () => {
+    closeSettingsModal();
+    openMarkerModal();
+});
+modalClearMarkersBtn.addEventListener('click', () => {
+    clearAllMarkers();
+    closeSettingsModal();
+});
+
+// Set Time modal
 function openTimeModal() {
     const curr = mode === "down" ? targetSeconds : remainingSeconds;
     modalHours.value = Math.floor(curr / 3600);
@@ -330,6 +358,7 @@ function openTimeModal() {
     modalHours.focus();
 }
 function closeTimeModal() { timeModal.style.display = 'none'; }
+setTimeBtn.addEventListener('click', openTimeModal);
 modalConfirm.addEventListener('click', () => {
     setTimerFromHoursMinutesSeconds(modalHours.value, modalMinutes.value, modalSeconds.value);
     closeTimeModal();
@@ -337,15 +366,7 @@ modalConfirm.addEventListener('click', () => {
 modalCancel.addEventListener('click', closeTimeModal);
 timeModal.addEventListener('click', (e) => { if (e.target === timeModal) closeTimeModal(); });
 
-modeToggleBtn.addEventListener('click', () => {
-    toggleMode();
-    closeSettingsModal();
-});
-
-setMarkerBtn.addEventListener('click', () => {
-    closeSettingsModal();
-    openMarkerModal();
-});
+// Marker modal
 function openMarkerModal() {
     if (targetSeconds === 0) {
         alert('Please set a timer time first.');
@@ -358,6 +379,7 @@ function openMarkerModal() {
     markerHours.focus();
 }
 function closeMarkerModal() { markerModal.style.display = 'none'; }
+setMarkerBtn.addEventListener('click', openMarkerModal);
 markerConfirm.addEventListener('click', () => {
     const selectedColor = document.querySelector('input[name="markerColor"]:checked').value;
     addMarker(markerHours.value, markerMinutes.value, markerSecs.value, selectedColor);
@@ -366,11 +388,10 @@ markerConfirm.addEventListener('click', () => {
 markerCancel.addEventListener('click', closeMarkerModal);
 markerModal.addEventListener('click', (e) => { if (e.target === markerModal) closeMarkerModal(); });
 
-clearMarkersBtn.addEventListener('click', () => {
-    clearAllMarkers();
-    closeSettingsModal();
-});
+// Clear markers
+clearMarkersBtn.addEventListener('click', clearAllMarkers);
 
+// Reset button
 resetBtn.addEventListener('click', () => {
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
@@ -379,11 +400,16 @@ resetBtn.addEventListener('click', () => {
     halfTriggered = false;
     updateDisplay();
     drawTimeline();
+    showAdvancedButtons();   // restore advanced buttons
 });
 
+// Mode toggle (from main button)
+modeToggleBtn.addEventListener('click', toggleMode);
+
+// Start/Pause toggle (main)
 startPauseBtn.addEventListener('click', toggleStartPause);
 
-// Help modal (optional)
+// Help modal
 if (helpBtn && helpModal) {
     helpBtn.addEventListener('click', () => helpModal.style.display = 'flex');
     closeHelpBtn.addEventListener('click', () => helpModal.style.display = 'none');
@@ -395,5 +421,6 @@ remainingSeconds = 0;
 targetSeconds = 0;
 updateDisplay();
 drawTimeline();
+showAdvancedButtons(); // advanced buttons visible at start
 
 window.addEventListener('resize', () => drawTimeline());

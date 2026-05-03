@@ -1,17 +1,21 @@
 // ---------- DOM elements ----------
-const settingsGroup = document.querySelector('.settings-group');
 const timerHoursSpan = document.querySelector('.timer-hours');
 const timerMinutesSpan = document.querySelector('.timer-minutes');
 const timerSecondsSpan = document.querySelector('.timer-seconds');
 const startPauseBtn = document.getElementById('startPauseBtn');
 const resetBtn = document.getElementById('resetBtn');
+const settingsBtn = document.getElementById('settingsBtn');
+const timelineCanvas = document.getElementById('timelineCanvas');
+const progressCircle = document.querySelector('.progress-ring__circle');
+
+// Modals
+const settingsModal = document.getElementById('settingsModal');
+const closeSettingsBtn = document.getElementById('closeSettingsBtn');
 const setTimeBtn = document.getElementById('setTimeBtn');
 const modeToggleBtn = document.getElementById('modeToggleBtn');
 const setMarkerBtn = document.getElementById('setMarkerBtn');
 const clearMarkersBtn = document.getElementById('clearMarkersBtn');
-const timelineCanvas = document.getElementById('timelineCanvas');
 
-// Modals
 const timeModal = document.getElementById('timeModal');
 const modalHours = document.getElementById('modalHours');
 const modalMinutes = document.getElementById('modalMinutes');
@@ -38,6 +42,8 @@ let mode = "down";              // "down" or "up"
 let pendingMarkers = [];        // { seconds, colorHex }
 let halfTriggered = false;
 
+const CIRCUMFERENCE = 2 * Math.PI * 108;
+
 // ---------- Helper functions ----------
 function formatTime(seconds) {
     const hrs = Math.floor(Math.abs(seconds) / 3600);
@@ -54,9 +60,28 @@ function updateDisplay() {
     timerHoursSpan.textContent = parts.hrs;
     timerMinutesSpan.textContent = parts.mins;
     timerSecondsSpan.textContent = parts.secs;
+    if (targetSeconds === 0) {
+        progressCircle.style.strokeDashoffset = CIRCUMFERENCE;
+        return;
+    }
+    let progress = remainingSeconds / targetSeconds;
+    progress = Math.min(1, Math.max(0, progress));
+    const offset = CIRCUMFERENCE * (1 - progress);
+    progressCircle.style.strokeDashoffset = offset;
+    if (mode === "down") {
+        if (remainingSeconds <= targetSeconds * 0.1) {
+            progressCircle.style.stroke = '#ef4444';
+        } else if (remainingSeconds <= targetSeconds * 0.3) {
+            progressCircle.style.stroke = '#eab308';
+        } else {
+            progressCircle.style.stroke = '#0f172a';
+        }
+    } else {
+        progressCircle.style.stroke = '#0f172a';
+    }
 }
 function flashColor(color) {
-    const timerDiv = document.querySelector('.timer');
+    const timerDiv = document.querySelector('.timer-text');
     const original = timerDiv.style.color;
     timerDiv.style.color = color;
     setTimeout(() => timerDiv.style.color = original, 400);
@@ -86,13 +111,9 @@ function finish() {
     startPauseBtn.innerHTML = '▶ Start';
     playBeep(880, 1);
     flashColor('#dc2626');
-    const timerDiv = document.querySelector('.timer');
-    timerDiv.style.animation = 'none';
-    timerDiv.offsetHeight;
-    timerDiv.style.animation = 'pulse 0.5s 3';
     drawTimeline();
-    // Show settings group again
-    if (settingsGroup) settingsGroup.classList.remove('hidden');
+    // Show settings button again
+    if (settingsBtn) settingsBtn.classList.remove('hidden');
 }
 function showToast(message) {
     const toast = document.createElement('div');
@@ -102,7 +123,7 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// ---------- Timeline drawing (mirrored for count‑up) ----------
+// ---------- Timeline drawing ----------
 function drawTimeline() {
     if (!timelineCanvas) return;
     const canvas = timelineCanvas;
@@ -202,7 +223,6 @@ function triggerMarker(markerSec) {
 // ---------- Timer core ----------
 function tick() {
     if (intervalId === null) return;
-
     if (mode === "down") {
         if (remainingSeconds <= 0) {
             finish();
@@ -245,16 +265,16 @@ function startTimer() {
     flashColor('#10b981');
     intervalId = setInterval(() => tick(), 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
-    // Hide settings group
-    if (settingsGroup) settingsGroup.classList.add('hidden');
+    // Hide settings button while timer runs
+    if (settingsBtn) settingsBtn.classList.add('hidden');
 }
 function pauseTimer() {
     if (intervalId === null) return;
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
     drawTimeline();
-    // Show settings group
-    if (settingsGroup) settingsGroup.classList.remove('hidden');
+    // Show settings button again
+    if (settingsBtn) settingsBtn.classList.remove('hidden');
 }
 function toggleStartPause() {
     if (intervalId === null) {
@@ -266,7 +286,7 @@ function toggleStartPause() {
 function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
-    if (settingsGroup) settingsGroup.classList.remove('hidden');  // <-- add this line
+    if (settingsBtn) settingsBtn.classList.remove('hidden');
     let h = parseInt(hours) || 0;
     let m = parseInt(minutes) || 0;
     let s = parseInt(seconds) || 0;
@@ -290,6 +310,18 @@ function toggleMode() {
 }
 
 // ---------- Modal handlers ----------
+// Settings modal
+function openSettingsModal() {
+    settingsModal.style.display = 'flex';
+}
+function closeSettingsModal() {
+    settingsModal.style.display = 'none';
+}
+settingsBtn.addEventListener('click', openSettingsModal);
+closeSettingsBtn.addEventListener('click', closeSettingsModal);
+settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettingsModal(); });
+
+// Set Time modal
 function openTimeModal() {
     const curr = mode === "down" ? targetSeconds : remainingSeconds;
     modalHours.value = Math.floor(curr / 3600);
@@ -297,20 +329,10 @@ function openTimeModal() {
     modalSeconds.value = curr % 60;
     timeModal.style.display = 'flex';
     modalHours.focus();
+    closeSettingsModal(); // close settings modal when opening time picker
 }
 function closeTimeModal() { timeModal.style.display = 'none'; }
 setTimeBtn.addEventListener('click', openTimeModal);
-resetBtn.addEventListener('click', () => {
-    stopTimer();
-    startPauseBtn.innerHTML = '▶ Start';
-    if (mode === "down") remainingSeconds = targetSeconds;
-    else remainingSeconds = 0;
-    halfTriggered = false;
-    updateDisplay();
-    drawTimeline();
-    // Show settings group
-    if (settingsGroup) settingsGroup.classList.remove('hidden');
-});
 modalConfirm.addEventListener('click', () => {
     setTimerFromHoursMinutesSeconds(modalHours.value, modalMinutes.value, modalSeconds.value);
     closeTimeModal();
@@ -318,6 +340,7 @@ modalConfirm.addEventListener('click', () => {
 modalCancel.addEventListener('click', closeTimeModal);
 timeModal.addEventListener('click', (e) => { if (e.target === timeModal) closeTimeModal(); });
 
+// Marker modal
 function openMarkerModal() {
     if (targetSeconds === 0) {
         alert('Please set a timer time first.');
@@ -328,6 +351,7 @@ function openMarkerModal() {
     markerSecs.value = 0;
     markerModal.style.display = 'flex';
     markerHours.focus();
+    closeSettingsModal();
 }
 function closeMarkerModal() { markerModal.style.display = 'none'; }
 setMarkerBtn.addEventListener('click', openMarkerModal);
@@ -348,11 +372,23 @@ if (helpBtn && helpModal) {
     helpModal.addEventListener('click', (e) => { if (e.target === helpModal) closeHelp(); });
 }
 
-// ---------- Event listeners ----------
+// Reset button
+resetBtn.addEventListener('click', () => {
+    stopTimer();
+    startPauseBtn.innerHTML = '▶ Start';
+    if (mode === "down") remainingSeconds = targetSeconds;
+    else remainingSeconds = 0;
+    halfTriggered = false;
+    updateDisplay();
+    drawTimeline();
+    if (settingsBtn) settingsBtn.classList.remove('hidden');
+});
+
+// Mode toggle (inside settings modal) – already has listener
 modeToggleBtn.addEventListener('click', toggleMode);
 startPauseBtn.addEventListener('click', toggleStartPause);
 
-// ---------- Initial values ----------
+// Initial
 remainingSeconds = 0;
 targetSeconds = 0;
 updateDisplay();

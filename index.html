@@ -13,6 +13,7 @@
 <div class="app">
     <h1 class="app-title">Glass Timer</h1>
 
+    <!-- Digital timer display (large) -->
     <div class="timer">
         <span class="timer-hours">00</span>
         <span class="timer-colon">:</span>
@@ -26,26 +27,37 @@
         <span class="unit">SECONDS</span>
     </div>
 
+    <!-- Timeline canvas for markers -->
     <div class="timeline-container">
         <canvas id="timelineCanvas" width="800" height="50" style="width:100%; height:50px"></canvas>
     </div>
 
+    <!-- Main controls: advanced group (visible initially) + runtime group -->
     <div class="controls">
-        <button id="startPauseBtn">▶ Start</button>
-        <button id="resetBtn">🔄 Reset</button>
-        <button id="settingsBtn">⚙️ Settings</button>
-    </div>
-</div>
-
-<!-- Settings Modal (all advanced controls) -->
-<div id="settingsModal" class="modal">
-    <div class="modal-content">
-        <h3>⚙️ Timer Settings</h3>
-        <div class="settings-buttons">
+        <div id="advancedGroup" class="advanced-group">
             <button id="setTimeBtn">⏱️ Set Time</button>
             <button id="modeToggleBtn">⬇️ Count Down</button>
             <button id="setMarkerBtn">🚩 Set Marker</button>
             <button id="clearMarkersBtn">🗑️ Clear All Markers</button>
+        </div>
+        <div class="runtime-group">
+            <button id="startPauseBtn">▶ Start</button>
+            <button id="resetBtn">🔄 Reset</button>
+        </div>
+        <!-- Settings button (hidden initially) -->
+        <button id="settingsBtn" class="settings-only" style="display: none;">⚙️ Settings</button>
+    </div>
+</div>
+
+<!-- Settings Modal (used when timer is running) -->
+<div id="settingsModal" class="modal">
+    <div class="modal-content">
+        <h3>⚙️ Timer Settings</h3>
+        <div class="settings-buttons">
+            <button id="modalSetTimeBtn">⏱️ Set Time</button>
+            <button id="modalModeToggleBtn">⬇️ Count Down</button>
+            <button id="modalSetMarkerBtn">🚩 Set Marker</button>
+            <button id="modalClearMarkersBtn">🗑️ Clear All Markers</button>
         </div>
         <div class="modal-buttons">
             <button id="closeSettingsBtn">Close</button>
@@ -92,9 +104,9 @@
     <div class="modal-content" style="max-width: 500px; text-align: left;">
         <h3 style="text-align: center;">📘 Timer Guide</h3>
         <div style="margin-top: 1rem;">
-            <p><strong>▶ Start / ⏸</strong> – starts/pauses the timer.</p>
-            <p><strong>🔄 Reset</strong> – resets to last set duration.</p>
-            <p><strong>⚙️ Settings</strong> – open modal to set time, change count mode, add markers, or clear all markers.</p>
+            <p><strong>▶ Start / ⏸</strong> – starts/pauses the timer. When running, advanced buttons collapse into a single Settings button.</p>
+            <p><strong>🔄 Reset</strong> – resets to last set duration and shows advanced buttons again.</p>
+            <p><strong>⚙️ Settings</strong> – opens modal with all timer options (only appears while timer is running).</p>
             <p><strong>🚩 Markers</strong> – flags on timeline use your chosen colour (Red, Green, Yellow).</p>
         </div>
         <div class="modal-buttons" style="margin-top: 1.5rem;">

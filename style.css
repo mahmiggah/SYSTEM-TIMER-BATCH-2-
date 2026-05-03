@@ -79,10 +79,15 @@ canvas {
 
 /* Button grid – responsive */
 .controls {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.settings-group, .runtime-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 0.75rem;
-    margin: 1.5rem 0;
 }
 button {
     background: white;

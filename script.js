@@ -142,6 +142,7 @@ function drawTimeline() {
     ctx.clearRect(0, 0, width, height);
     if (targetSeconds === 0) return;
 
+    // Base line
     ctx.beginPath();
     ctx.moveTo(10, height / 2);
     ctx.lineTo(width - 10, height / 2);
@@ -149,11 +150,12 @@ function drawTimeline() {
     ctx.strokeStyle = '#cbd5e1';
     ctx.stroke();
 
+    // Current position (left to right, 0 = start, 1 = finish)
     let progress;
     if (mode === "down") {
         progress = (targetSeconds - remainingSeconds) / targetSeconds;
-    } else {
-        progress = 1 - (remainingSeconds / targetSeconds);
+    } else { // count up
+        progress = remainingSeconds / targetSeconds;
     }
     progress = Math.min(1, Math.max(0, progress));
     const currentX = 10 + progress * (width - 20);
@@ -166,17 +168,14 @@ function drawTimeline() {
     ctx.fillStyle = 'white';
     ctx.fill();
 
+    // Markers: always placed from left (start) to right (finish)
     for (let marker of pendingMarkers) {
-        let markerPos;
-        if (mode === "down") {
-            markerPos = marker.seconds / targetSeconds;
-        } else {
-            markerPos = 1 - (marker.seconds / targetSeconds);
-        }
+        // marker position = marker.seconds / targetSeconds
+        let markerPos = marker.seconds / targetSeconds;
         const x = 10 + markerPos * (width - 20);
-        // Use the user-selected fixed color (do NOT change based on distance)
+        // Use the user‑selected fixed colour
         const markerColor = marker.fixedColor;
-        // flag triangle
+        // triangle flag
         ctx.beginPath();
         ctx.moveTo(x, height / 2 - 8);
         ctx.lineTo(x - 4, height / 2);

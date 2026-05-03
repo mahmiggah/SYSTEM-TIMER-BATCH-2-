@@ -12,17 +12,25 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 2rem;
+    padding: 1.5rem;
 }
 
 .app {
-    max-width: 800px;
+    max-width: 700px;
     width: 100%;
     background: white;
     border-radius: 2rem;
-    box-shadow: 0 20px 35px -10px rgba(0,0,0,0.05);
-    padding: 2rem;
+    box-shadow: 0 20px 35px -10px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.01);
+    padding: 2rem 1.5rem;
     text-align: center;
+}
+
+.app-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    color: #1e293b;
+    letter-spacing: -0.3px;
 }
 
 .timer {
@@ -36,7 +44,7 @@ body {
     letter-spacing: 2px;
     background: white;
     border-radius: 2rem;
-    padding: 1rem 2rem;
+    padding: 1rem 1.5rem;
     margin-bottom: 0.5rem;
     color: #0f172a;
 }
@@ -47,10 +55,11 @@ body {
 .timer .timer-colon {
     min-width: auto;
 }
+
 .timer-units {
     display: flex;
     justify-content: center;
-    gap: 1rem;
+    gap: 1.5rem;
     font-size: 0.7rem;
     font-weight: 500;
     text-transform: uppercase;
@@ -63,42 +72,30 @@ body {
 }
 
 .timeline-container {
-    margin: 1.5rem 0;
+    margin: 1rem 0 1.5rem 0;
     background: #f1f5f9;
-    border-radius: 1rem;
+    border-radius: 2rem;
     padding: 0.5rem;
 }
 canvas {
     display: block;
     width: 100%;
     background: transparent;
-    border-radius: 0.75rem;
+    border-radius: 1rem;
 }
 
 .controls {
     display: flex;
     justify-content: center;
     gap: 1rem;
-    margin: 1.5rem 0;
-    flex-wrap: wrap;
-    align-items: center;
-}
-.advanced-group {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-.runtime-group {
-    display: flex;
-    gap: 0.75rem;
+    margin: 1rem 0;
 }
 button {
     background: white;
     border: 1px solid #e2e8f0;
     border-radius: 2rem;
-    padding: 0.7rem 1.2rem;
-    font-size: 1rem;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
     font-weight: 500;
     color: #0f172a;
     cursor: pointer;
@@ -121,17 +118,8 @@ button:hover {
 #startPauseBtn:hover {
     background: #1e293b;
 }
-.settings-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin: 1.5rem 0;
-}
-.settings-buttons button {
-    width: 100%;
-    justify-content: center;
-}
 
+/* Modal */
 .modal {
     display: none;
     position: fixed;
@@ -157,6 +145,16 @@ button:hover {
 .modal-content h3 {
     margin-bottom: 1.5rem;
     font-weight: 600;
+}
+.settings-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+.settings-buttons button {
+    width: 100%;
+    justify-content: center;
 }
 .time-input-group {
     display: flex;
@@ -194,12 +192,13 @@ button:hover {
     border: 1px solid #cbd5e1;
     padding: 0.5rem 1.2rem;
 }
-#modalConfirmBtn, #markerConfirmBtn, #closeHelpBtn, #closeSettingsBtn {
+#modalConfirmBtn, #markerConfirmBtn, #closeSettingsBtn, #closeHelpBtn {
     background: #0f172a;
     color: white;
     border: none;
 }
 
+/* Toast message */
 .toast-message {
     position: fixed;
     bottom: 80px;
@@ -229,8 +228,9 @@ button:hover {
 }
 
 @media (max-width: 550px) {
-    .timer { font-size: 2.5rem; padding: 1rem; }
-    .controls { flex-direction: column; align-items: stretch; }
-    .advanced-group, .runtime-group { justify-content: center; }
+    .app { padding: 1.5rem; }
+    .timer { font-size: 2.5rem; padding: 0.8rem; gap: 0.3rem; }
+    .timer-units { gap: 0.8rem; }
+    .controls { gap: 0.5rem; }
     button { padding: 0.5rem 1rem; font-size: 0.85rem; }
 }

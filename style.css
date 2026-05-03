@@ -268,3 +268,18 @@ button:active {
         font-size: 0.75rem;
     }
 }
+/* Settings group – hidden when timer is running */
+.settings-group {
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+.settings-group.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+/* Keep runtime buttons always visible */
+.runtime-group {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}

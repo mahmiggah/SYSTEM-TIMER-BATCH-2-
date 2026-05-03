@@ -174,14 +174,16 @@ function drawTimeline() {
             markerPos = 1 - (marker.seconds / targetSeconds);
         }
         const x = 10 + markerPos * (width - 20);
-        let distance = Math.abs(progress - markerPos);
-        const markerColor = getMarkerColor(distance);
+        // Use the user-selected fixed color (do NOT change based on distance)
+        const markerColor = marker.fixedColor;
+        // flag triangle
         ctx.beginPath();
         ctx.moveTo(x, height / 2 - 8);
         ctx.lineTo(x - 4, height / 2);
         ctx.lineTo(x + 4, height / 2);
         ctx.fillStyle = markerColor;
         ctx.fill();
+        // base circle
         ctx.beginPath();
         ctx.arc(x, height / 2, 3, 0, 2 * Math.PI);
         ctx.fillStyle = markerColor;

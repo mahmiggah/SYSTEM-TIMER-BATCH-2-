@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Glass Timer – Dynamic Markers</title>
+    <title>Glass Timer – Collapsible Settings</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f8fafc">
@@ -11,7 +11,7 @@
 </head>
 <body>
 <div class="app">
-    <!-- Digital timer display -->
+    <!-- Digital timer -->
     <div class="timer">
         <span class="timer-hours">00</span>
         <span class="timer-colon">:</span>
@@ -25,28 +25,39 @@
         <span class="unit">SECONDS</span>
     </div>
 
-    <!-- Timeline canvas (markers with dynamic colours) -->
+    <!-- Timeline canvas -->
     <div class="timeline-container">
         <canvas id="timelineCanvas" width="800" height="50" style="width:100%; height:50px"></canvas>
     </div>
 
-    <!-- Three main buttons -->
+    <!-- Main controls -->
     <div class="controls">
-        <button id="startPauseBtn">▶ Start</button>
-        <button id="resetBtn">🔄 Reset</button>
-        <button id="settingsBtn">⚙️ Settings</button>
-    </div>
-</div>
-
-<!-- Settings Modal (contains all advanced controls) -->
-<div id="settingsModal" class="modal">
-    <div class="modal-content" style="max-width: 500px;">
-        <h3>⚙️ Timer Settings</h3>
-        <div class="settings-buttons">
+        <!-- Left group: advanced buttons (visible when timer not running) -->
+        <div id="advancedButtons" class="advanced-group">
             <button id="setTimeBtn">⏱️ Set Time</button>
             <button id="modeToggleBtn">⬇️ Count Down</button>
             <button id="setMarkerBtn">🚩 Set Marker</button>
             <button id="clearMarkersBtn">🗑️ Clear All Markers</button>
+        </div>
+        <!-- Right group: always visible -->
+        <div class="runtime-group">
+            <button id="startPauseBtn">▶ Start</button>
+            <button id="resetBtn">🔄 Reset</button>
+        </div>
+        <!-- Settings button (hidden initially) -->
+        <button id="settingsBtn" class="settings-only" style="display: none;">⚙️ Settings</button>
+    </div>
+</div>
+
+<!-- Settings Modal (used when timer is running) -->
+<div id="settingsModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <h3>⚙️ Timer Settings</h3>
+        <div class="settings-buttons">
+            <button id="modalSetTimeBtn">⏱️ Set Time</button>
+            <button id="modalModeToggleBtn">⬇️ Count Down</button>
+            <button id="modalSetMarkerBtn">🚩 Set Marker</button>
+            <button id="modalClearMarkersBtn">🗑️ Clear All Markers</button>
         </div>
         <div class="modal-buttons">
             <button id="closeSettingsBtn">Close</button>
@@ -93,10 +104,10 @@
     <div class="modal-content" style="max-width: 500px; text-align: left;">
         <h3 style="text-align: center;">📘 Timer Guide</h3>
         <div style="margin-top: 1rem;">
-            <p><strong>▶ Start / ⏸</strong> – starts/pauses the timer.</p>
-            <p><strong>🔄 Reset</strong> – resets to last set duration.</p>
-            <p><strong>⚙️ Settings</strong> – open advanced options (Set Time, Count mode, Markers, Clear markers).</p>
-            <p><strong>🚩 Markers</strong> – add flags with a fixed colour; on the timeline the flag colour changes dynamically (green → yellow → red) as the timer approaches.</p>
+            <p><strong>▶ Start / ⏸</strong> – starts/pauses the timer. When running, advanced buttons collapse into a single Settings button.</p>
+            <p><strong>🔄 Reset</strong> – resets to last set duration and restores advanced buttons.</p>
+            <p><strong>⚙️ Settings</strong> – opens a modal with all timer options (Set Time, Count mode, Markers, Clear markers).</p>
+            <p><strong>🚩 Markers</strong> – flags on timeline change colour (green → yellow → red) as the timer approaches.</p>
         </div>
         <div class="modal-buttons" style="margin-top: 1.5rem;">
             <button id="closeHelpBtn" style="background:#0f172a; color:white;">Got it</button>

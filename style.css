@@ -25,7 +25,7 @@ body {
     text-align: center;
 }
 
-/* Digital timer display */
+/* Digital timer */
 .timer {
     display: flex;
     justify-content: center;
@@ -77,24 +77,19 @@ canvas {
     border-radius: 0.75rem;
 }
 
-/* Button grid – responsive */
+/* Three buttons (Start, Reset, Settings) */
 .controls {
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-.settings-group, .runtime-group {
-    display: flex;
-    flex-wrap: wrap;
     justify-content: center;
-    gap: 0.75rem;
+    gap: 1rem;
+    margin: 1.5rem 0;
 }
 button {
     background: white;
     border: 1px solid #e2e8f0;
     border-radius: 2rem;
-    padding: 0.6rem 0.8rem;
-    font-size: 0.85rem;
+    padding: 0.7rem 1.2rem;
+    font-size: 1rem;
     font-weight: 500;
     color: #0f172a;
     cursor: pointer;
@@ -109,9 +104,6 @@ button:hover {
     background: #f8fafc;
     transform: translateY(-1px);
 }
-button:active {
-    transform: translateY(1px);
-}
 #startPauseBtn {
     background: #0f172a;
     color: white;
@@ -120,20 +112,20 @@ button:active {
 #startPauseBtn:hover {
     background: #1e293b;
 }
-#modeToggleBtn {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
+
+/* Settings modal buttons */
+.settings-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
 }
-#setMarkerBtn {
-    background: #f8fafc;
-    border-left: 3px solid #3b82f6;
-}
-#clearMarkersBtn {
-    color: #dc2626;
-    border-color: #fee2e2;
+.settings-buttons button {
+    width: 100%;
+    justify-content: center;
 }
 
-/* Modals (identical to new design) */
+/* Modals (same as before) */
 .modal {
     display: none;
     position: fixed;
@@ -196,34 +188,13 @@ button:active {
     border: 1px solid #cbd5e1;
     padding: 0.5rem 1.2rem;
 }
-#modalConfirmBtn, #markerConfirmBtn, #closeHelpBtn {
+#modalConfirmBtn, #markerConfirmBtn, #closeHelpBtn, #closeSettingsBtn {
     background: #0f172a;
     color: white;
     border: none;
 }
 
-/* Help floating button */
-.help-corner {
-    position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    background: white;
-    border-radius: 2rem;
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    cursor: pointer;
-    font-size: 1.2rem;
-    border: 1px solid #e2e8f0;
-}
-.help-corner:hover {
-    transform: scale(1.05);
-}
-
-/* Toast notification */
+/* Toast message */
 .toast-message {
     position: fixed;
     bottom: 80px;
@@ -247,62 +218,15 @@ button:active {
     100% { opacity: 0; transform: translateX(-50%) translateY(-10px); visibility: hidden; }
 }
 
-/* Pulse animation for finish */
+/* Pulse animation */
 @keyframes pulse {
     0% { transform: scale(1); text-shadow: 0 0 0 cyan; }
     50% { transform: scale(1.05); text-shadow: 0 0 8px cyan; color: #0ea5e9; }
     100% { transform: scale(1); text-shadow: 0 0 0 cyan; }
 }
 
-/* Responsive */
 @media (max-width: 550px) {
-    .timer {
-        font-size: 2.5rem;
-        padding: 1rem;
-    }
-    .controls {
-        gap: 0.5rem;
-    }
-    button {
-        padding: 0.5rem 0.6rem;
-        font-size: 0.75rem;
-    }
-}
-/* Settings group – hidden when timer is running */
-.settings-group {
-    transition: opacity 0.2s ease, visibility 0.2s ease;
-}
-.settings-group.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-}
-/* Keep runtime buttons always visible */
-.runtime-group {
-    display: flex;
-    gap: 0.75rem;
-
-    /* Settings button (visible by default) */
-#settingsBtn {
-    background: #f1f5f9;
-    border-left: 3px solid #64748b;
-}
-
-/* When timer is running, hide the settings button */
-#settingsBtn.hidden {
-    display: none;
-}
-
-/* Settings modal buttons – arranged in a grid */
-.settings-modal-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin: 1rem 0;
-}
-.settings-modal-buttons button {
-    width: 100%;
-    justify-content: center;
-}
-    justify-content: center;
+    .timer { font-size: 2.5rem; padding: 1rem; }
+    .controls { gap: 0.5rem; }
+    button { padding: 0.5rem 1rem; font-size: 0.85rem; }
 }

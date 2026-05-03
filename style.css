@@ -25,7 +25,6 @@ body {
     text-align: center;
 }
 
-/* Digital timer */
 .timer {
     display: flex;
     justify-content: center;
@@ -63,7 +62,6 @@ body {
     text-align: center;
 }
 
-/* Timeline canvas */
 .timeline-container {
     margin: 1.5rem 0;
     background: #f1f5f9;
@@ -77,7 +75,6 @@ canvas {
     border-radius: 0.75rem;
 }
 
-/* Three buttons (Start, Reset, Settings) */
 .controls {
     display: flex;
     justify-content: center;
@@ -113,7 +110,6 @@ button:hover {
     background: #1e293b;
 }
 
-/* Settings modal buttons */
 .settings-buttons {
     display: flex;
     flex-direction: column;
@@ -125,7 +121,6 @@ button:hover {
     justify-content: center;
 }
 
-/* Modals (same as before) */
 .modal {
     display: none;
     position: fixed;
@@ -194,7 +189,6 @@ button:hover {
     border: none;
 }
 
-/* Toast message */
 .toast-message {
     position: fixed;
     bottom: 80px;
@@ -217,8 +211,6 @@ button:hover {
     70% { opacity: 1; }
     100% { opacity: 0; transform: translateX(-50%) translateY(-10px); visibility: hidden; }
 }
-
-/* Pulse animation */
 @keyframes pulse {
     0% { transform: scale(1); text-shadow: 0 0 0 cyan; }
     50% { transform: scale(1.05); text-shadow: 0 0 8px cyan; color: #0ea5e9; }

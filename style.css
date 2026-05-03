@@ -16,7 +16,7 @@ body {
 }
 
 .app {
-    max-width: 700px;
+    max-width: 800px;
     width: 100%;
     background: white;
     border-radius: 2rem;
@@ -30,26 +30,24 @@ body {
     font-weight: 500;
     margin-bottom: 1.5rem;
     color: #1e293b;
-    letter-spacing: -0.3px;
 }
 
 .timer {
     display: flex;
     justify-content: center;
     align-items: baseline;
-    gap: 0.5rem;
-    font-size: 4rem;
+    gap: 0.8rem;
+    font-size: 5rem;
     font-weight: 600;
     font-family: 'JetBrains Mono', 'SF Mono', monospace;
-    letter-spacing: 2px;
     background: white;
     border-radius: 2rem;
-    padding: 1rem 1.5rem;
+    padding: 1.2rem 1.5rem;
     margin-bottom: 0.5rem;
     color: #0f172a;
 }
 .timer span {
-    min-width: 1.2em;
+    min-width: 1.4em;
     text-align: center;
 }
 .timer .timer-colon {
@@ -59,15 +57,15 @@ body {
 .timer-units {
     display: flex;
     justify-content: center;
-    gap: 1.5rem;
-    font-size: 0.7rem;
+    gap: 2rem;
+    font-size: 0.8rem;
     font-weight: 500;
     text-transform: uppercase;
     color: #64748b;
     margin-bottom: 2rem;
 }
 .timer-units .unit {
-    min-width: 3rem;
+    min-width: 3.5rem;
     text-align: center;
 }
 
@@ -86,16 +84,28 @@ canvas {
 
 .controls {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 1rem;
     margin-top: 1rem;
+    align-items: center;
+}
+.advanced-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+}
+.runtime-group {
+    display: flex;
+    gap: 0.75rem;
 }
 button {
     background: white;
     border: 1px solid #e2e8f0;
     border-radius: 2rem;
-    padding: 0.6rem 1.2rem;
-    font-size: 0.95rem;
+    padding: 0.7rem 1.4rem;
+    font-size: 1rem;
     font-weight: 500;
     color: #0f172a;
     cursor: pointer;
@@ -103,7 +113,7 @@ button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
+    gap: 0.5rem;
     font-family: inherit;
 }
 button:hover {
@@ -119,7 +129,6 @@ button:hover {
     background: #1e293b;
 }
 
-/* Modal styles */
 .modal {
     display: none;
     position: fixed;
@@ -209,7 +218,6 @@ button:hover {
     border-radius: 2rem;
     font-size: 0.9rem;
     font-weight: 500;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     z-index: 2000;
     animation: fadeOut 3s forwards;
     pointer-events: none;
@@ -227,9 +235,11 @@ button:hover {
 }
 
 @media (max-width: 550px) {
-    .app { padding: 1.5rem; }
-    .timer { font-size: 2.5rem; padding: 0.8rem; gap: 0.3rem; }
-    .timer-units { gap: 0.8rem; }
-    .controls { gap: 0.5rem; }
+    .app { padding: 1rem; }
+    .timer { font-size: 3rem; padding: 0.8rem; gap: 0.4rem; }
+    .timer span { min-width: 1.2em; }
+    .timer-units { gap: 1rem; }
+    .timer-units .unit { min-width: 2rem; }
     button { padding: 0.5rem 1rem; font-size: 0.85rem; }
+    .advanced-group { gap: 0.5rem; }
 }

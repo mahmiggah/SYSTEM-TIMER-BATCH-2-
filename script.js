@@ -38,7 +38,7 @@ let intervalId = null;
 let remainingSeconds = 0;
 let targetSeconds = 0;
 let mode = "down";              // "down" or "up"
-let pendingMarkers = [];        // { seconds, colorHex }
+let pendingMarkers = [];        // { seconds, fixedColor }   (fixedColor used only for marker badge)
 let halfTriggered = false;
 
 // ---------- Helper functions ----------
@@ -103,7 +103,14 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// ---------- Timeline drawing (mirrored for count‑up) ----------
+// ---------- Timeline drawing with dynamic marker colours (green -> yellow -> red) ----------
+function getMarkerColor(distancePercent) {
+    // distancePercent = how far the current time is from the marker (0..1)
+    // 0 = exactly at marker, 1 = far away
+    if (distancePercent <= 0.1) return '#ef4444';   // red (very close)
+    if (distancePercent <= 0.3) return '#eab308';   // yellow (approaching)
+    return '#10b981';                               // green (far)
+}
 function drawTimeline() {
     if (!timelineCanvas) return;
     const canvas = timelineCanvas;
@@ -117,6 +124,7 @@ function drawTimeline() {
     ctx.clearRect(0, 0, width, height);
     if (targetSeconds === 0) return;
 
+    // Base line
     ctx.beginPath();
     ctx.moveTo(10, height / 2);
     ctx.lineTo(width - 10, height / 2);
@@ -124,6 +132,7 @@ function drawTimeline() {
     ctx.strokeStyle = '#cbd5e1';
     ctx.stroke();
 
+    // Current position
     let progress;
     if (mode === "down") {
         progress = (targetSeconds - remainingSeconds) / targetSeconds;
@@ -141,6 +150,7 @@ function drawTimeline() {
     ctx.fillStyle = 'white';
     ctx.fill();
 
+    // Draw markers with dynamic colours based on distance to current time
     for (let marker of pendingMarkers) {
         let markerPos;
         if (mode === "down") {
@@ -149,21 +159,30 @@ function drawTimeline() {
             markerPos = 1 - (marker.seconds / targetSeconds);
         }
         const x = 10 + markerPos * (width - 20);
+        // Calculate distance from current position (0..1)
+        let distance = Math.abs(progress - markerPos);
+        if (mode === "up") {
+            // in count-up, markers are reached when progress passes them; distance is the difference
+            distance = Math.abs(progress - markerPos);
+        }
+        const markerColor = getMarkerColor(distance);
+        // triangle flag
         ctx.beginPath();
         ctx.moveTo(x, height / 2 - 8);
         ctx.lineTo(x - 4, height / 2);
         ctx.lineTo(x + 4, height / 2);
-        ctx.fillStyle = marker.colorHex;
+        ctx.fillStyle = markerColor;
         ctx.fill();
+        // base circle
         ctx.beginPath();
         ctx.arc(x, height / 2, 3, 0, 2 * Math.PI);
-        ctx.fillStyle = marker.colorHex;
+        ctx.fillStyle = markerColor;
         ctx.fill();
     }
 }
 
 // ---------- Marker management ----------
-function addMarker(hours, minutes, seconds, colorHex) {
+function addMarker(hours, minutes, seconds, fixedColor) {
     let h = parseInt(hours) || 0;
     let m = parseInt(minutes) || 0;
     let s = parseInt(seconds) || 0;
@@ -179,7 +198,7 @@ function addMarker(hours, minutes, seconds, colorHex) {
         alert('Marker time exceeds timer duration.');
         return;
     }
-    pendingMarkers.push({ seconds: totalSec, colorHex });
+    pendingMarkers.push({ seconds: totalSec, fixedColor });
     pendingMarkers.sort((a, b) => a.seconds - b.seconds);
     drawTimeline();
 }
@@ -197,7 +216,7 @@ function triggerMarker(markerSec) {
     pendingMarkers.splice(idx, 1);
     drawTimeline();
     playBeep(1200, 0.3);
-    flashColor(marker.colorHex);
+    flashColor('#dc2626');   // red flash for marker hit
 }
 
 // ---------- Timer core ----------
@@ -298,7 +317,6 @@ settingsModal.addEventListener('click', (e) => {
     if (e.target === settingsModal) closeSettingsModal();
 });
 
-// Set Time modal (reuse from settings)
 setTimeBtn.addEventListener('click', () => {
     closeSettingsModal();
     openTimeModal();
@@ -319,13 +337,11 @@ modalConfirm.addEventListener('click', () => {
 modalCancel.addEventListener('click', closeTimeModal);
 timeModal.addEventListener('click', (e) => { if (e.target === timeModal) closeTimeModal(); });
 
-// Mode toggle (reuse)
 modeToggleBtn.addEventListener('click', () => {
     toggleMode();
     closeSettingsModal();
 });
 
-// Set Marker modal (reuse)
 setMarkerBtn.addEventListener('click', () => {
     closeSettingsModal();
     openMarkerModal();
@@ -350,13 +366,11 @@ markerConfirm.addEventListener('click', () => {
 markerCancel.addEventListener('click', closeMarkerModal);
 markerModal.addEventListener('click', (e) => { if (e.target === markerModal) closeMarkerModal(); });
 
-// Clear markers
 clearMarkersBtn.addEventListener('click', () => {
     clearAllMarkers();
     closeSettingsModal();
 });
 
-// Reset button
 resetBtn.addEventListener('click', () => {
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
@@ -367,7 +381,6 @@ resetBtn.addEventListener('click', () => {
     drawTimeline();
 });
 
-// Start/Pause
 startPauseBtn.addEventListener('click', toggleStartPause);
 
 // Help modal (optional)

@@ -281,5 +281,28 @@ button:active {
 .runtime-group {
     display: flex;
     gap: 0.75rem;
+
+    /* Settings button (visible by default) */
+#settingsBtn {
+    background: #f1f5f9;
+    border-left: 3px solid #64748b;
+}
+
+/* When timer is running, hide the settings button */
+#settingsBtn.hidden {
+    display: none;
+}
+
+/* Settings modal buttons – arranged in a grid */
+.settings-modal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+.settings-modal-buttons button {
+    width: 100%;
+    justify-content: center;
+}
     justify-content: center;
 }

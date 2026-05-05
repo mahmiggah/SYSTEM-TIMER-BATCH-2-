@@ -62,29 +62,54 @@ function updateTrafficLight() {
         return;
     }
 
-    let remainingTime;
     if (mode === "down") {
-        remainingTime = Math.max(0, remainingSeconds); // seconds left
-    } else { // ascending
-        remainingTime = Math.max(0, targetSeconds - remainingSeconds); // time left until target
-    }
-
-    // Determine which light is active
-    if (remainingTime <= 3) {
-        // Red: 3 seconds or less
-        greenLight.classList.remove('active');
-        yellowLight.classList.remove('active');
-        redLight.classList.add('active');
-    } else if (remainingTime <= targetSeconds / 2 && remainingTime > 3) {
-        // Yellow: between 3 seconds and half of total (or you can keep percentage)
-        greenLight.classList.remove('active');
-        yellowLight.classList.add('active');
-        redLight.classList.remove('active');
+        // Countdown: red when remaining ≤ 2 seconds (and not negative)
+        if (remainingSeconds <= 2 && remainingSeconds >= 0) {
+            greenLight.classList.remove('active');
+            yellowLight.classList.remove('active');
+            redLight.classList.add('active');
+            return;
+        }
+        // Otherwise use progress (green/yellow) based on elapsed time
+        const elapsed = targetSeconds - remainingSeconds;
+        const progress = elapsed / targetSeconds;
+        if (progress < 0.33) {
+            greenLight.classList.add('active');
+            yellowLight.classList.remove('active');
+            redLight.classList.remove('active');
+        } else if (progress < 0.66) {
+            greenLight.classList.remove('active');
+            yellowLight.classList.add('active');
+            redLight.classList.remove('active');
+        } else {
+            greenLight.classList.remove('active');
+            yellowLight.classList.remove('active');
+            redLight.classList.add('active');
+        }
     } else {
-        // Green: more than half of total
-        greenLight.classList.add('active');
-        yellowLight.classList.remove('active');
-        redLight.classList.remove('active');
+        // Ascending: red when remaining to target ≤ 2 seconds
+        const remainingToTarget = targetSeconds - remainingSeconds;
+        if (remainingToTarget <= 2 && remainingSeconds <= targetSeconds) {
+            greenLight.classList.remove('active');
+            yellowLight.classList.remove('active');
+            redLight.classList.add('active');
+            return;
+        }
+        // Use progress for green/yellow
+        const progress = remainingSeconds / targetSeconds;
+        if (progress < 0.33) {
+            greenLight.classList.add('active');
+            yellowLight.classList.remove('active');
+            redLight.classList.remove('active');
+        } else if (progress < 0.66) {
+            greenLight.classList.remove('active');
+            yellowLight.classList.add('active');
+            redLight.classList.remove('active');
+        } else {
+            greenLight.classList.remove('active');
+            yellowLight.classList.remove('active');
+            redLight.classList.add('active');
+        }
     }
 }
 

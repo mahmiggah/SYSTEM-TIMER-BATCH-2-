@@ -61,26 +61,30 @@ function updateTrafficLight() {
         redLight.classList.remove('active');
         return;
     }
-    let progress;
-    if (mode === "down") {
-        progress = (targetSeconds - Math.min(remainingSeconds, targetSeconds)) / targetSeconds;
-    } else {
-        progress = Math.min(remainingSeconds, targetSeconds) / targetSeconds;
-    }
-    progress = Math.min(1, Math.max(0, progress));
 
-    if (progress < 0.33) {
-        greenLight.classList.add('active');
+    let remainingTime;
+    if (mode === "down") {
+        remainingTime = Math.max(0, remainingSeconds); // seconds left
+    } else { // ascending
+        remainingTime = Math.max(0, targetSeconds - remainingSeconds); // time left until target
+    }
+
+    // Determine which light is active
+    if (remainingTime <= 3) {
+        // Red: 3 seconds or less
+        greenLight.classList.remove('active');
         yellowLight.classList.remove('active');
-        redLight.classList.remove('active');
-    } else if (progress < 0.66) {
+        redLight.classList.add('active');
+    } else if (remainingTime <= targetSeconds / 2 && remainingTime > 3) {
+        // Yellow: between 3 seconds and half of total (or you can keep percentage)
         greenLight.classList.remove('active');
         yellowLight.classList.add('active');
         redLight.classList.remove('active');
     } else {
-        greenLight.classList.remove('active');
+        // Green: more than half of total
+        greenLight.classList.add('active');
         yellowLight.classList.remove('active');
-        redLight.classList.add('active');
+        redLight.classList.remove('active');
     }
 }
 

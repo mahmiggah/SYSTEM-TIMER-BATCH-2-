@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Glass Timer</title>
+    <title>Glass Timer – Traffic Light</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f8fafc">
@@ -11,7 +11,7 @@
 </head>
 <body>
 <div class="app">
-    <h1 class="app-title"></h1>
+    <h1 class="app-title">Glass Timer</h1>
 
     <!-- Enlarged timer display -->
     <div class="timer">
@@ -27,9 +27,11 @@
         <span class="unit">SECONDS</span>
     </div>
 
-    <!-- Timeline canvas for markers -->
-    <div class="timeline-container">
-        <canvas id="timelineCanvas" width="800" height="50" style="width:100%; height:50px"></canvas>
+    <!-- Traffic light indicator -->
+    <div class="traffic-light">
+        <div class="light red"></div>
+        <div class="light yellow"></div>
+        <div class="light green active"></div>
     </div>
 
     <!-- Three main buttons -->
@@ -40,15 +42,16 @@
     </div>
 </div>
 
-<!-- Settings Modal (all advanced controls) -->
+<!-- Settings Modal -->
 <div id="settingsModal" class="modal">
     <div class="modal-content">
         <h3>⚙️ Timer Settings</h3>
         <div class="settings-buttons">
             <button id="setTimeBtn">⏱️ Set Time</button>
-            <button id="modeToggleBtn">⬇️ Count Down</button>
-            <button id="setMarkerBtn">🚩 Set Marker</button>
-            <button id="clearMarkersBtn">🗑️ Clear All Markers</button>
+            <div class="mode-radio">
+                <label><input type="radio" name="countMode" value="down" checked> Descending</label>
+                <label><input type="radio" name="countMode" value="up"> Ascending</label>
+            </div>
         </div>
         <div class="modal-buttons">
             <button id="closeSettingsBtn">Close</button>
@@ -61,44 +64,23 @@
     <div class="modal-content">
         <h3>Set Timer</h3>
         <div class="time-input-group">
-            <div class="input-unit"><input type="number" id="modalHours" min="0" value="0" step="1"><span>hours</span></div>
-            <div class="input-unit"><input type="number" id="modalMinutes" min="0" value="1" step="1"><span>minutes</span></div>
+            <div class="input-unit"><input type="number" id="modalHours" min="0" max="99" value="0" step="1"><span>hours</span></div>
+            <div class="input-unit"><input type="number" id="modalMinutes" min="0" max="59" value="1" step="1"><span>minutes</span></div>
             <div class="input-unit"><input type="number" id="modalSeconds" min="0" max="59" value="0" step="1"><span>seconds</span></div>
         </div>
         <div class="modal-buttons"><button id="modalConfirmBtn">Set Timer</button><button id="modalCancelBtn">Cancel</button></div>
     </div>
 </div>
 
-<!-- Marker Modal -->
-<div id="markerModal" class="modal">
-    <div class="modal-content">
-        <h3>Add Marker</h3>
-        <div class="time-input-group">
-            <div class="input-unit"><input type="number" id="markerHours" min="0" value="0" step="1"><span>hours</span></div>
-            <div class="input-unit"><input type="number" id="markerMinutes" min="0" value="0" step="1"><span>minutes</span></div>
-            <div class="input-unit"><input type="number" id="markerSeconds" min="0" max="59" value="0" step="1"><span>seconds</span></div>
-        </div>
-        <div style="margin: 1rem 0;">
-            <label style="margin-right: 1rem;"><input type="radio" name="markerColor" value="#ef4444" checked> 🔴 Red</label>
-            <label style="margin-right: 1rem;"><input type="radio" name="markerColor" value="#10b981"> 🟢 Green</label>
-            <label><input type="radio" name="markerColor" value="#eab308"> 🟡 Yellow</label>
-        </div>
-        <div class="modal-buttons">
-            <button id="markerConfirmBtn">Add Marker</button>
-            <button id="markerCancelBtn">Cancel</button>
-        </div>
-    </div>
-</div>
-
-<!-- Help Modal (optional) -->
+<!-- Help Modal -->
 <div id="helpModal" class="modal">
     <div class="modal-content" style="max-width: 500px; text-align: left;">
         <h3 style="text-align: center;">📘 Timer Guide</h3>
         <div style="margin-top: 1rem;">
             <p><strong>▶ Start / ⏸</strong> – starts/pauses the timer.</p>
             <p><strong>🔄 Reset</strong> – resets to last set duration.</p>
-            <p><strong>⚙️ Settings</strong> – open modal to set time, change count mode, add markers, or clear all markers.</p>
-            <p><strong>🚩 Markers</strong> – flags on timeline use your chosen colour (Red, Green, Yellow).</p>
+            <p><strong>⚙️ Settings</strong> – open modal to set time or change mode (descending/ascending).</p>
+            <p><strong>🚦 Traffic light</strong> – green (start), yellow (middle), red (near finish).</p>
         </div>
         <div class="modal-buttons" style="margin-top: 1.5rem;">
             <button id="closeHelpBtn" style="background:#0f172a; color:white;">Got it</button>

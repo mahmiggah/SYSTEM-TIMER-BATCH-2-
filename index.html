@@ -13,7 +13,6 @@
 <div class="app">
     <h1 class="app-title">Glass Timer</h1>
 
-    <!-- Enlarged timer display -->
     <div class="timer">
         <span class="timer-hours">00</span>
         <span class="timer-colon">:</span>
@@ -27,14 +26,12 @@
         <span class="unit">SECONDS</span>
     </div>
 
-    <!-- Traffic light indicator -->
     <div class="traffic-light">
         <div class="light red"></div>
         <div class="light yellow"></div>
         <div class="light green active"></div>
     </div>
 
-    <!-- Three main buttons -->
     <div class="controls">
         <button id="startPauseBtn">▶ Start</button>
         <button id="resetBtn">🔄 Reset</button>
@@ -42,7 +39,6 @@
     </div>
 </div>
 
-<!-- Settings Modal -->
 <div id="settingsModal" class="modal">
     <div class="modal-content">
         <h3>⚙️ Timer Settings</h3>
@@ -59,7 +55,6 @@
     </div>
 </div>
 
-<!-- Set Time Modal -->
 <div id="timeModal" class="modal">
     <div class="modal-content">
         <h3>Set Timer</h3>
@@ -72,15 +67,14 @@
     </div>
 </div>
 
-<!-- Help Modal -->
 <div id="helpModal" class="modal">
     <div class="modal-content" style="max-width: 500px; text-align: left;">
         <h3 style="text-align: center;">📘 Timer Guide</h3>
         <div style="margin-top: 1rem;">
-            <p><strong>▶ Start / ⏸</strong> – starts/pauses the timer.</p>
+            <p><strong>▶ Start / ⏸</strong> – starts/pauses the timer. Timer continues beyond limit.</p>
             <p><strong>🔄 Reset</strong> – resets to last set duration.</p>
-            <p><strong>⚙️ Settings</strong> – open modal to set time or change mode (descending/ascending).</p>
-            <p><strong>🚦 Traffic light</strong> – green (start), yellow (middle), red (near finish).</p>
+            <p><strong>⚙️ Settings</strong> – set time or change mode (descending/ascending).</p>
+            <p><strong>🚦 Traffic light</strong> – green (start), yellow (middle), red (near end & beyond).</p>
         </div>
         <div class="modal-buttons" style="margin-top: 1.5rem;">
             <button id="closeHelpBtn" style="background:#0f172a; color:white;">Got it</button>

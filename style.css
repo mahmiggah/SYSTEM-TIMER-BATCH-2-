@@ -32,7 +32,6 @@ body {
     color: #1e293b;
 }
 
-/* Enlarged timer */
 .timer {
     display: flex;
     justify-content: center;
@@ -70,17 +69,32 @@ body {
     text-align: center;
 }
 
-.timeline-container {
-    margin: 1rem 0 1.5rem 0;
-    background: #f1f5f9;
-    border-radius: 2rem;
-    padding: 0.5rem;
+/* Traffic light */
+.traffic-light {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin: 1rem 0 1.5rem;
 }
-canvas {
-    display: block;
-    width: 100%;
-    background: transparent;
-    border-radius: 1rem;
+.light {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    transition: background 0.3s;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.1);
+}
+.light.red.active {
+    background: #ef4444;
+    box-shadow: 0 0 12px #ef4444;
+}
+.light.yellow.active {
+    background: #eab308;
+    box-shadow: 0 0 12px #eab308;
+}
+.light.green.active {
+    background: #10b981;
+    box-shadow: 0 0 12px #10b981;
 }
 
 .controls {
@@ -148,12 +162,25 @@ button:hover {
 .settings-buttons {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
     margin: 1rem 0;
 }
 .settings-buttons button {
     width: 100%;
     justify-content: center;
+}
+.mode-radio {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin: 0.5rem 0;
+}
+.mode-radio label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
 }
 .time-input-group {
     display: flex;
@@ -191,13 +218,12 @@ button:hover {
     border: 1px solid #cbd5e1;
     padding: 0.5rem 1.2rem;
 }
-#modalConfirmBtn, #markerConfirmBtn, #closeSettingsBtn, #closeHelpBtn {
+#modalConfirmBtn, #closeSettingsBtn, #closeHelpBtn {
     background: #0f172a;
     color: white;
     border: none;
 }
 
-/* Toast message */
 .toast-message {
     position: fixed;
     bottom: 80px;
@@ -231,6 +257,8 @@ button:hover {
     .timer span { min-width: 1.2em; }
     .timer-units { gap: 1rem; font-size: 0.65rem; }
     .timer-units .unit { min-width: 2rem; }
+    .traffic-light { gap: 0.8rem; }
+    .light { width: 40px; height: 40px; }
     .controls { gap: 0.8rem; }
     button { padding: 0.5rem 1rem; font-size: 0.85rem; }
 }

@@ -6,13 +6,11 @@ const startPauseBtn = document.getElementById('startPauseBtn');
 const resetBtn = document.getElementById('resetBtn');
 const settingsBtn = document.getElementById('settingsBtn');
 
-// Settings modal and its buttons
 const settingsModal = document.getElementById('settingsModal');
 const closeSettingsBtn = document.getElementById('closeSettingsBtn');
 const setTimeBtn = document.getElementById('setTimeBtn');
 const modeRadios = document.querySelectorAll('input[name="countMode"]');
 
-// Time modal
 const timeModal = document.getElementById('timeModal');
 const modalHours = document.getElementById('modalHours');
 const modalMinutes = document.getElementById('modalMinutes');
@@ -20,30 +18,32 @@ const modalSeconds = document.getElementById('modalSeconds');
 const modalConfirm = document.getElementById('modalConfirmBtn');
 const modalCancel = document.getElementById('modalCancelBtn');
 
-// Help modal
 const helpBtn = document.getElementById('helpBtn');
 const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
 
-// Traffic lights
 const redLight = document.querySelector('.light.red');
 const yellowLight = document.querySelector('.light.yellow');
 const greenLight = document.querySelector('.light.green');
 
 // Timer state
 let intervalId = null;
-let remainingSeconds = 0;
-let targetSeconds = 0;
-let mode = "down";          // "down" = descending, "up" = ascending
-let halfTriggered = false;
+let remainingSeconds = 0;      // current value (can go negative for descending, beyond target for ascending)
+let targetSeconds = 0;         // set duration (positive)
+let mode = "down";             // "down" or "up"
+let halfTriggered = false;     // halfway flash (visual only)
+let finishNotified = false;    // to play beep/toast only once when crossing the target
 
 // Helper functions
 function formatTime(seconds) {
-    const hrs = Math.floor(Math.abs(seconds) / 3600);
-    const mins = Math.floor((Math.abs(seconds) % 3600) / 60);
-    const secs = Math.abs(seconds) % 60;
+    // allow negative values – show as -HH:MM:SS
+    const sign = seconds < 0 ? '-' : '';
+    const absSecs = Math.abs(seconds);
+    const hrs = Math.floor(absSecs / 3600);
+    const mins = Math.floor((absSecs % 3600) / 60);
+    const secs = absSecs % 60;
     return {
-        hrs: hrs.toString().padStart(2, '0'),
+        hrs: (sign + hrs.toString().padStart(2, '0')).slice(-3),
         mins: mins.toString().padStart(2, '0'),
         secs: secs.toString().padStart(2, '0')
     };
@@ -57,20 +57,23 @@ function updateDisplay() {
 
 function updateTrafficLight() {
     if (targetSeconds === 0) {
-        // no time set, turn all off? keep green active? we'll default to green off.
-        redLight.classList.remove('active');
-        yellowLight.classList.remove('active');
         greenLight.classList.remove('active');
+        yellowLight.classList.remove('active');
+        redLight.classList.remove('active');
         return;
     }
     let progress;
     if (mode === "down") {
-        progress = (targetSeconds - remainingSeconds) / targetSeconds;
+        // progress = how much of the original time has been consumed
+        let consumed = targetSeconds - remainingSeconds;
+        progress = consumed / targetSeconds;
     } else {
+        // ascending: progress = elapsed / target
         progress = remainingSeconds / targetSeconds;
     }
+    // Clamp progress between 0 and 1
     progress = Math.min(1, Math.max(0, progress));
-    // Green: 0 - 0.33, Yellow: 0.33 - 0.66, Red: 0.66 - 1
+
     if (progress < 0.33) {
         greenLight.classList.add('active');
         yellowLight.classList.remove('active');
@@ -112,17 +115,6 @@ function playBeep(freq = 880, dur = 0.5) {
         osc.stop(ctx.currentTime + dur);
     } catch (e) {}
 }
-function finish() {
-    stopTimer();
-    startPauseBtn.innerHTML = '▶ Start';
-    playBeep(880, 1);
-    flashColor('#dc2626');
-    const timerDiv = document.querySelector('.timer');
-    timerDiv.style.animation = 'none';
-    timerDiv.offsetHeight;
-    timerDiv.style.animation = 'pulse 0.5s 3';
-    updateTrafficLight();
-}
 function showToast(message) {
     const toast = document.createElement('div');
     toast.className = 'toast-message';
@@ -131,45 +123,44 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Timer core
+// Timer core – continuous counting
 function tick() {
     if (intervalId === null) return;
 
     if (mode === "down") {
-        if (remainingSeconds <= 0) {
-            finish();
-            return;
-        }
         remainingSeconds--;
+        // check if we just crossed zero (from 0 to -1) – notify once
+        if (!finishNotified && remainingSeconds < 0 && targetSeconds > 0) {
+            finishNotified = true;
+            playBeep(880, 1);
+            showToast('⏰ Time reached (descending)');
+            flashColor('#dc2626');
+        }
+        // halfway flash (only once, still works)
         if (!halfTriggered && targetSeconds > 0 && remainingSeconds <= targetSeconds / 2) {
             halfTriggered = true;
             flashColor('#eab308');
         }
-        if (remainingSeconds <= 0) {
-            remainingSeconds = 0;
-            finish();
-        }
-    } else {
-        if (targetSeconds > 0 && remainingSeconds >= targetSeconds) {
-            finish();
-            return;
-        }
+    } else { // ascending
         remainingSeconds++;
+        if (!finishNotified && remainingSeconds >= targetSeconds && targetSeconds > 0) {
+            finishNotified = true;
+            playBeep(880, 1);
+            showToast('⏰ Time reached (ascending)');
+            flashColor('#dc2626');
+        }
         if (!halfTriggered && targetSeconds > 0 && remainingSeconds >= targetSeconds / 2) {
             halfTriggered = true;
             flashColor('#eab308');
-        }
-        if (targetSeconds > 0 && remainingSeconds >= targetSeconds) {
-            remainingSeconds = targetSeconds;
-            finish();
         }
     }
     updateDisplay();
     updateTrafficLight();
 }
+
 function startTimer() {
     if (intervalId !== null) return;
-    if (mode === "down" && remainingSeconds <= 0) return;
+    // no condition to block start – even if remainingSeconds is beyond target, it's allowed
     flashColor('#10b981');
     intervalId = setInterval(() => tick(), 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
@@ -195,6 +186,7 @@ function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     if (mode === "down") remainingSeconds = targetSeconds;
     else remainingSeconds = 0;
     halfTriggered = false;
+    finishNotified = false;
     updateDisplay();
     updateTrafficLight();
 }
@@ -203,18 +195,28 @@ function setModeFromRadios() {
     const newMode = selected === "up" ? "up" : "down";
     if (newMode !== mode) {
         mode = newMode;
-        // Adjust remainingSeconds based on new mode but keep same target
+        // Adjust remainingSeconds based on new mode, keep same target
         if (mode === "down") remainingSeconds = targetSeconds;
         else remainingSeconds = 0;
         halfTriggered = false;
+        finishNotified = false;
         updateDisplay();
         updateTrafficLight();
     }
 }
+function resetTimer() {
+    stopTimer();
+    startPauseBtn.innerHTML = '▶ Start';
+    if (mode === "down") remainingSeconds = targetSeconds;
+    else remainingSeconds = 0;
+    halfTriggered = false;
+    finishNotified = false;
+    updateDisplay();
+    updateTrafficLight();
+}
 
 // Modal handlers
 function openSettingsModal() {
-    // Sync radio buttons with current mode
     const radioToCheck = mode === "down" ? document.querySelector('input[value="down"]') : document.querySelector('input[value="up"]');
     if (radioToCheck) radioToCheck.checked = true;
     settingsModal.style.display = 'flex';
@@ -226,7 +228,6 @@ settingsModal.addEventListener('click', (e) => {
     if (e.target === settingsModal) closeSettingsModal();
 });
 
-// Set Time button inside settings modal: open time modal but keep settings open? Actually we'll close settings, open time, and after confirm reopen settings.
 setTimeBtn.addEventListener('click', () => {
     closeSettingsModal();
     openTimeModal();
@@ -243,28 +244,18 @@ function closeTimeModal() { timeModal.style.display = 'none'; }
 modalConfirm.addEventListener('click', () => {
     setTimerFromHoursMinutesSeconds(modalHours.value, modalMinutes.value, modalSeconds.value);
     closeTimeModal();
-    openSettingsModal(); // return to settings modal after setting time
+    openSettingsModal(); // return to settings modal
 });
 modalCancel.addEventListener('click', closeTimeModal);
 timeModal.addEventListener('click', (e) => { if (e.target === timeModal) closeTimeModal(); });
 
-// Mode radio change: apply immediately and keep settings open
 modeRadios.forEach(radio => {
     radio.addEventListener('change', () => {
         setModeFromRadios();
     });
 });
 
-resetBtn.addEventListener('click', () => {
-    stopTimer();
-    startPauseBtn.innerHTML = '▶ Start';
-    if (mode === "down") remainingSeconds = targetSeconds;
-    else remainingSeconds = 0;
-    halfTriggered = false;
-    updateDisplay();
-    updateTrafficLight();
-});
-
+resetBtn.addEventListener('click', resetTimer);
 startPauseBtn.addEventListener('click', toggleStartPause);
 
 // Help modal

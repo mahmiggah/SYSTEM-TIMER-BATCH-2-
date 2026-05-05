@@ -22,28 +22,27 @@ const helpBtn = document.getElementById('helpBtn');
 const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
 
-const redLight = document.querySelector('.light.red');
-const yellowLight = document.querySelector('.light.yellow');
+// Traffic lights (order: green, yellow, red)
 const greenLight = document.querySelector('.light.green');
+const yellowLight = document.querySelector('.light.yellow');
+const redLight = document.querySelector('.light.red');
 
 // Timer state
 let intervalId = null;
-let remainingSeconds = 0;      // current value (can go negative for descending, beyond target for ascending)
+let remainingSeconds = 0;      // current value
 let targetSeconds = 0;         // set duration (positive)
 let mode = "down";             // "down" or "up"
-let halfTriggered = false;     // halfway flash (visual only)
-let finishNotified = false;    // to play beep/toast only once when crossing the target
+let halfTriggered = false;     // halfway flash (visual)
+let finishNotified = false;    // to play beep/toast only once when crossing the target (for ascending)
 
 // Helper functions
 function formatTime(seconds) {
-    // allow negative values – show as -HH:MM:SS
-    const sign = seconds < 0 ? '-' : '';
     const absSecs = Math.abs(seconds);
     const hrs = Math.floor(absSecs / 3600);
     const mins = Math.floor((absSecs % 3600) / 60);
     const secs = absSecs % 60;
     return {
-        hrs: (sign + hrs.toString().padStart(2, '0')).slice(-3),
+        hrs: hrs.toString().padStart(2, '0'),
         mins: mins.toString().padStart(2, '0'),
         secs: secs.toString().padStart(2, '0')
     };
@@ -64,14 +63,10 @@ function updateTrafficLight() {
     }
     let progress;
     if (mode === "down") {
-        // progress = how much of the original time has been consumed
-        let consumed = targetSeconds - remainingSeconds;
-        progress = consumed / targetSeconds;
+        progress = (targetSeconds - Math.min(remainingSeconds, targetSeconds)) / targetSeconds;
     } else {
-        // ascending: progress = elapsed / target
-        progress = remainingSeconds / targetSeconds;
+        progress = Math.min(remainingSeconds, targetSeconds) / targetSeconds;
     }
-    // Clamp progress between 0 and 1
     progress = Math.min(1, Math.max(0, progress));
 
     if (progress < 0.33) {
@@ -123,20 +118,27 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Timer core – continuous counting
+// Timer core
 function tick() {
     if (intervalId === null) return;
 
     if (mode === "down") {
-        remainingSeconds--;
-        // check if we just crossed zero (from 0 to -1) – notify once
-        if (!finishNotified && remainingSeconds < 0 && targetSeconds > 0) {
-            finishNotified = true;
-            playBeep(880, 1);
-            showToast('⏰ Time reached (descending)');
-            flashColor('#dc2626');
+        if (remainingSeconds <= 0) {
+            // Stopped at zero
+            return;
         }
-        // halfway flash (only once, still works)
+        remainingSeconds--;
+        if (remainingSeconds === 0) {
+            // reached zero exactly
+            stopTimer();
+            startPauseBtn.innerHTML = '▶ Start';
+            playBeep(880, 1);
+            showToast('⏰ Time\'s up!');
+            flashColor('#dc2626');
+            updateTrafficLight();
+            updateDisplay();
+            return;
+        }
         if (!halfTriggered && targetSeconds > 0 && remainingSeconds <= targetSeconds / 2) {
             halfTriggered = true;
             flashColor('#eab308');
@@ -146,7 +148,7 @@ function tick() {
         if (!finishNotified && remainingSeconds >= targetSeconds && targetSeconds > 0) {
             finishNotified = true;
             playBeep(880, 1);
-            showToast('⏰ Time reached (ascending)');
+            showToast('⏰ Target reached – continuing');
             flashColor('#dc2626');
         }
         if (!halfTriggered && targetSeconds > 0 && remainingSeconds >= targetSeconds / 2) {
@@ -160,7 +162,7 @@ function tick() {
 
 function startTimer() {
     if (intervalId !== null) return;
-    // no condition to block start – even if remainingSeconds is beyond target, it's allowed
+    if (mode === "down" && remainingSeconds <= 0) return; // cannot start if already at zero in descending
     flashColor('#10b981');
     intervalId = setInterval(() => tick(), 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
@@ -195,7 +197,7 @@ function setModeFromRadios() {
     const newMode = selected === "up" ? "up" : "down";
     if (newMode !== mode) {
         mode = newMode;
-        // Adjust remainingSeconds based on new mode, keep same target
+        // Reset the timer with the same target but appropriate starting point
         if (mode === "down") remainingSeconds = targetSeconds;
         else remainingSeconds = 0;
         halfTriggered = false;

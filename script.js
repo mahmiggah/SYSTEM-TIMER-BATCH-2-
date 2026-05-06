@@ -325,7 +325,7 @@ function tick() {
     updateTrafficLight();
 }
 
-// Preparation tick (does not auto-start main timer)
+// Preparation tick (auto-starts main timer after prep ends)
 function tickPreparation() {
     if (intervalId === null) return;
     if (remainingSeconds <= 0) {
@@ -333,11 +333,14 @@ function tickPreparation() {
         startPauseBtn.innerHTML = '▶ Start';
         isPreparing = false;
         if (prepIndicator) prepIndicator.style.display = 'none';
-        // Restore original main timer values (but do NOT start automatically)
+        // Restore original main timer values
         remainingSeconds = originalMainRemaining;
         targetSeconds = originalTarget;
         updateDisplay();
-        // Do NOT start main timer – user must press Start again
+        // Auto-start the main timer
+        if ((mode === "down" && remainingSeconds > 0) || (mode === "up")) {
+            startTimer(); // this will start the main timer (prep already consumed)
+        }
         return;
     }
     remainingSeconds--;

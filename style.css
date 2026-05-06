@@ -294,6 +294,11 @@ button:hover {
     color: white;
     border: none;
 }
+.continue-option {
+    margin: 0.5rem 0;
+    display: flex;
+    justify-content: center;
+}
 
 /* ---------- TOAST MESSAGES ---------- */
 .toast-message {

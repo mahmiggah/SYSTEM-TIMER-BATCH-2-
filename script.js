@@ -69,7 +69,7 @@ if (continueDescendingCheckbox) {
     });
 }
 
-// Helper: format time (with negative sign if needed)
+// Helper: format time (with negative sign)
 function formatTime(seconds) {
     const sign = seconds < 0 ? '-' : '';
     const absSecs = Math.abs(seconds);
@@ -89,33 +89,50 @@ function updateDisplay() {
     timerSecondsSpan.textContent = parts.secs;
 }
 
-// Determine which event should be active (the greatest time ≤ current)
+/* ----- TRAFFIC LIGHT EVENT LOGIC (FIXED) ----- */
 function getActiveEvent() {
     if (targetSeconds === 0 || events.length === 0) return null;
-    let current;
+
     if (mode === "down") {
-        current = remainingSeconds;
-    } else {
-        current = remainingSeconds; // elapsed time (ascending)
-    }
-    // For negative remainingSeconds, no event should be active
-    if (mode === "down" && current < 0) return null;
-    let candidate = null;
-    for (let ev of events) {
-        if (ev.timeSeconds <= current) {
-            if (candidate === null || ev.timeSeconds > candidate.timeSeconds) {
-                candidate = ev;
+        // Descending: active event is the smallest event time >= current remaining seconds
+        // (i.e., the next upcoming event)
+        let candidate = null;
+        for (let ev of events) {
+            if (ev.timeSeconds >= remainingSeconds) {
+                if (candidate === null || ev.timeSeconds < candidate.timeSeconds) {
+                    candidate = ev;
+                }
             }
         }
+        // If no event is above or equal, no active event (lights off)
+        return candidate;
+    } else {
+        // Ascending: active event is the largest event time <= current elapsed seconds
+        let candidate = null;
+        for (let ev of events) {
+            if (ev.timeSeconds <= remainingSeconds) {
+                if (candidate === null || ev.timeSeconds > candidate.timeSeconds) {
+                    candidate = ev;
+                }
+            }
+        }
+        return candidate;
     }
-    return candidate;
 }
 
 function updateTrafficLight() {
-    const active = getActiveEvent();
+    // First turn all off
     greenLight.classList.remove('active');
     yellowLight.classList.remove('active');
     redLight.classList.remove('active');
+
+    // Special case: descending mode and timer is negative → red light on
+    if (mode === "down" && remainingSeconds < 0 && continueDescending) {
+        redLight.classList.add('active');
+        return;
+    }
+
+    const active = getActiveEvent();
     if (!active) return;
     switch (active.color) {
         case 'green': greenLight.classList.add('active'); break;
@@ -124,7 +141,7 @@ function updateTrafficLight() {
     }
 }
 
-// Events management
+// Events management (add, remove, render)
 function renderEventsList() {
     if (!eventsListDiv) return;
     eventsListDiv.innerHTML = '';
@@ -263,13 +280,6 @@ function tick() {
             halfTriggered = true;
             flashColor('#eab308');
         }
-        // Events only trigger while non‑negative
-        if (remainingSeconds >= 0) {
-            const markerHit = events.find(ev => ev.timeSeconds === remainingSeconds);
-            if (markerHit) {
-                // No extra toast for events, just light change
-            }
-        }
     } else { // ascending
         remainingSeconds++;
         if (!finishNotified && remainingSeconds >= targetSeconds && targetSeconds > 0) {
@@ -282,8 +292,6 @@ function tick() {
             halfTriggered = true;
             flashColor('#eab308');
         }
-        const triggered = events.filter(ev => ev.timeSeconds <= remainingSeconds);
-        // No additional toasts for events
     }
     updateDisplay();
     updateTrafficLight();

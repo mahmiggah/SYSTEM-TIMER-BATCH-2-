@@ -22,20 +22,42 @@ const helpBtn = document.getElementById('helpBtn');
 const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
 
-// Traffic lights (order: green, yellow, red)
+// Traffic lights
 const greenLight = document.querySelector('.light.green');
 const yellowLight = document.querySelector('.light.yellow');
 const redLight = document.querySelector('.light.red');
 
+// Threshold inputs
+const yellowInput = document.getElementById('yellowThreshold');
+const redInput = document.getElementById('redThreshold');
+
 // Timer state
 let intervalId = null;
-let remainingSeconds = 0;      // current value
-let targetSeconds = 0;         // set duration (positive)
+let remainingSeconds = 0;
+let targetSeconds = 0;
 let mode = "down";             // "down" or "up"
-let halfTriggered = false;     // halfway flash (visual)
-let finishNotified = false;    // to play beep/toast only once when crossing the target (for ascending)
+let halfTriggered = false;
+let finishNotified = false;    // for ascending (toast once)
 
-// Helper functions
+// Default thresholds (seconds left to trigger yellow / red)
+let yellowThreshold = 10;
+let redThreshold = 3;
+
+// ---------- Load / save thresholds ----------
+function loadThresholds() {
+    const savedYellow = localStorage.getItem('yellowThreshold');
+    const savedRed = localStorage.getItem('redThreshold');
+    if (savedYellow !== null) yellowThreshold = parseInt(savedYellow);
+    if (savedRed !== null) redThreshold = parseInt(savedRed);
+    if (yellowInput) yellowInput.value = yellowThreshold;
+    if (redInput) redInput.value = redThreshold;
+}
+function saveThresholds() {
+    localStorage.setItem('yellowThreshold', yellowThreshold);
+    localStorage.setItem('redThreshold', redThreshold);
+}
+
+// ---------- Helper functions ----------
 function formatTime(seconds) {
     const absSecs = Math.abs(seconds);
     const hrs = Math.floor(absSecs / 3600);
@@ -63,52 +85,35 @@ function updateTrafficLight() {
     }
 
     if (mode === "down") {
-        // Countdown: red when remaining ≤ 2 seconds (and not negative)
-        if (remainingSeconds <= 2 && remainingSeconds >= 0) {
+        const remaining = remainingSeconds;
+        if (remaining <= redThreshold && remaining >= 0) {
             greenLight.classList.remove('active');
             yellowLight.classList.remove('active');
             redLight.classList.add('active');
-            return;
-        }
-        // Otherwise use progress (green/yellow) based on elapsed time
-        const elapsed = targetSeconds - remainingSeconds;
-        const progress = elapsed / targetSeconds;
-        if (progress < 0.33) {
-            greenLight.classList.add('active');
-            yellowLight.classList.remove('active');
-            redLight.classList.remove('active');
-        } else if (progress < 0.66) {
+        } else if (remaining <= yellowThreshold) {
             greenLight.classList.remove('active');
             yellowLight.classList.add('active');
             redLight.classList.remove('active');
         } else {
-            greenLight.classList.remove('active');
+            greenLight.classList.add('active');
             yellowLight.classList.remove('active');
-            redLight.classList.add('active');
+            redLight.classList.remove('active');
         }
     } else {
-        // Ascending: red when remaining to target ≤ 2 seconds
+        // Ascending: use the remaining time to reach target
         const remainingToTarget = targetSeconds - remainingSeconds;
-        if (remainingToTarget <= 2 && remainingSeconds <= targetSeconds) {
+        if (remainingToTarget <= redThreshold && remainingSeconds <= targetSeconds) {
             greenLight.classList.remove('active');
             yellowLight.classList.remove('active');
             redLight.classList.add('active');
-            return;
-        }
-        // Use progress for green/yellow
-        const progress = remainingSeconds / targetSeconds;
-        if (progress < 0.33) {
-            greenLight.classList.add('active');
-            yellowLight.classList.remove('active');
-            redLight.classList.remove('active');
-        } else if (progress < 0.66) {
+        } else if (remainingToTarget <= yellowThreshold) {
             greenLight.classList.remove('active');
             yellowLight.classList.add('active');
             redLight.classList.remove('active');
         } else {
-            greenLight.classList.remove('active');
+            greenLight.classList.add('active');
             yellowLight.classList.remove('active');
-            redLight.classList.add('active');
+            redLight.classList.remove('active');
         }
     }
 }
@@ -147,18 +152,14 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Timer core
+// ---------- Timer core ----------
 function tick() {
     if (intervalId === null) return;
 
     if (mode === "down") {
-        if (remainingSeconds <= 0) {
-            // Stopped at zero
-            return;
-        }
+        if (remainingSeconds <= 0) return;
         remainingSeconds--;
         if (remainingSeconds === 0) {
-            // reached zero exactly
             stopTimer();
             startPauseBtn.innerHTML = '▶ Start';
             playBeep(880, 1);
@@ -191,7 +192,7 @@ function tick() {
 
 function startTimer() {
     if (intervalId !== null) return;
-    if (mode === "down" && remainingSeconds <= 0) return; // cannot start if already at zero in descending
+    if (mode === "down" && remainingSeconds <= 0) return;
     flashColor('#10b981');
     intervalId = setInterval(() => tick(), 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
@@ -226,7 +227,6 @@ function setModeFromRadios() {
     const newMode = selected === "up" ? "up" : "down";
     if (newMode !== mode) {
         mode = newMode;
-        // Reset the timer with the same target but appropriate starting point
         if (mode === "down") remainingSeconds = targetSeconds;
         else remainingSeconds = 0;
         halfTriggered = false;
@@ -246,7 +246,7 @@ function resetTimer() {
     updateTrafficLight();
 }
 
-// Modal handlers
+// ---------- Modal handlers ----------
 function openSettingsModal() {
     const radioToCheck = mode === "down" ? document.querySelector('input[value="down"]') : document.querySelector('input[value="up"]');
     if (radioToCheck) radioToCheck.checked = true;
@@ -280,6 +280,20 @@ modalConfirm.addEventListener('click', () => {
 modalCancel.addEventListener('click', closeTimeModal);
 timeModal.addEventListener('click', (e) => { if (e.target === timeModal) closeTimeModal(); });
 
+// Threshold listeners
+if (yellowInput && redInput) {
+    yellowInput.addEventListener('change', () => {
+        yellowThreshold = parseInt(yellowInput.value) || 0;
+        saveThresholds();
+        updateTrafficLight();
+    });
+    redInput.addEventListener('change', () => {
+        redThreshold = parseInt(redInput.value) || 0;
+        saveThresholds();
+        updateTrafficLight();
+    });
+}
+
 modeRadios.forEach(radio => {
     radio.addEventListener('change', () => {
         setModeFromRadios();
@@ -297,6 +311,7 @@ if (helpBtn && helpModal) {
 }
 
 // Initial
+loadThresholds();
 remainingSeconds = 0;
 targetSeconds = 0;
 updateDisplay();

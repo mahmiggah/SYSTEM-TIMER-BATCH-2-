@@ -1,4 +1,4 @@
-// DOM elements
+// DOM elements (add continue checkbox)
 const timerHoursSpan = document.querySelector('.timer-hours');
 const timerMinutesSpan = document.querySelector('.timer-minutes');
 const timerSecondsSpan = document.querySelector('.timer-seconds');
@@ -10,6 +10,7 @@ const settingsModal = document.getElementById('settingsModal');
 const closeSettingsBtn = document.getElementById('closeSettingsBtn');
 const setTimeBtn = document.getElementById('setTimeBtn');
 const modeRadios = document.querySelectorAll('input[name="countMode"]');
+const continueCheckbox = document.getElementById('continueDescending');
 
 const timeModal = document.getElementById('timeModal');
 const modalHours = document.getElementById('modalHours');
@@ -18,7 +19,6 @@ const modalSeconds = document.getElementById('modalSeconds');
 const modalConfirm = document.getElementById('modalConfirmBtn');
 const modalCancel = document.getElementById('modalCancelBtn');
 
-// Event modal elements
 const eventModal = document.getElementById('eventModal');
 const eventHours = document.getElementById('eventHours');
 const eventMinutes = document.getElementById('eventMinutes');
@@ -32,7 +32,6 @@ const helpBtn = document.getElementById('helpBtn');
 const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
 
-// Traffic lights
 const greenLight = document.querySelector('.light.green');
 const yellowLight = document.querySelector('.light.yellow');
 const redLight = document.querySelector('.light.red');
@@ -44,11 +43,30 @@ let targetSeconds = 0;
 let mode = "down";
 let halfTriggered = false;
 let finishNotified = false;
+let continueDescending = false; // new flag
 
-// Events array: each { timeSeconds, color }
+// Events array
 let events = [];
 
-// Helper: format time
+// Load/save thresholds and continue option
+function loadSettings() {
+    const savedContinue = localStorage.getItem('continueDescending');
+    if (savedContinue !== null) continueDescending = savedContinue === 'true';
+    if (continueCheckbox) continueCheckbox.checked = continueDescending;
+}
+function saveContinue() {
+    localStorage.setItem('continueDescending', continueDescending);
+}
+// Event listeners for checkbox
+if (continueCheckbox) {
+    continueCheckbox.addEventListener('change', (e) => {
+        continueDescending = e.target.checked;
+        saveContinue();
+        // No need to change current timer state
+    });
+}
+
+// Helper functions (formatTime, updateDisplay, getActiveEvent, updateTrafficLight, etc.)
 function formatTime(seconds) {
     const absSecs = Math.abs(seconds);
     const hrs = Math.floor(absSecs / 3600);
@@ -67,14 +85,16 @@ function updateDisplay() {
     timerSecondsSpan.textContent = parts.secs;
 }
 
-// Determine which event should be active (the greatest time ≤ current)
 function getActiveEvent() {
     if (targetSeconds === 0 || events.length === 0) return null;
     let current;
     if (mode === "down") {
+        // For descending, if continuing past zero, we treat current as remaining (may be negative)
+        // Events only trigger when remaining >= 0 and <= event time. After zero, no new events.
+        if (remainingSeconds < 0) return null;
         current = remainingSeconds;
     } else {
-        current = remainingSeconds; // elapsed time (ascending)
+        current = remainingSeconds;
     }
     let candidate = null;
     for (let ev of events) {
@@ -89,11 +109,10 @@ function getActiveEvent() {
 
 function updateTrafficLight() {
     const active = getActiveEvent();
-    // Turn off all lights first
     greenLight.classList.remove('active');
     yellowLight.classList.remove('active');
     redLight.classList.remove('active');
-    if (!active) return; // No event reached → all lights off
+    if (!active) return;
     switch (active.color) {
         case 'green': greenLight.classList.add('active'); break;
         case 'yellow': yellowLight.classList.add('active'); break;
@@ -101,7 +120,7 @@ function updateTrafficLight() {
     }
 }
 
-// Events management (render list, add, remove)
+// Events management (same as before)
 function renderEventsList() {
     if (!eventsListDiv) return;
     eventsListDiv.innerHTML = '';
@@ -209,23 +228,40 @@ function showToast(message) {
 function tick() {
     if (intervalId === null) return;
     if (mode === "down") {
-        if (remainingSeconds <= 0) return;
+        // Descending
+        if (!continueDescending && remainingSeconds <= 0) return; // stop at zero
         remainingSeconds--;
-        if (remainingSeconds === 0) {
-            stopTimer();
-            startPauseBtn.innerHTML = '▶ Start';
+        // Check for crossing zero (only once)
+        if (!finishNotified && remainingSeconds < 0 && targetSeconds > 0) {
+            finishNotified = true;
             playBeep(880, 1);
-            showToast('⏰ Time\'s up!');
+            showToast('⏰ Time reached – continuing negative');
             flashColor('#dc2626');
-            updateTrafficLight();
-            updateDisplay();
-            return;
         }
-        if (!halfTriggered && targetSeconds > 0 && remainingSeconds <= targetSeconds / 2) {
+        if (!halfTriggered && targetSeconds > 0 && remainingSeconds <= targetSeconds / 2 && remainingSeconds >= 0) {
             halfTriggered = true;
             flashColor('#eab308');
         }
+        // Only check events when remainingSeconds >= 0
+        if (remainingSeconds >= 0) {
+            const candidate = getActiveEvent(); // but getActiveEvent uses current remainingSeconds
+            // Actually getActiveEvent already called inside updateTrafficLight, which is called after tick.
+        }
+        if (!continueDescending && remainingSeconds <= 0) {
+            // If not continuing, stop at zero
+            if (remainingSeconds === 0) {
+                stopTimer();
+                startPauseBtn.innerHTML = '▶ Start';
+                playBeep(880, 1);
+                showToast('⏰ Time\'s up!');
+                flashColor('#dc2626');
+                updateTrafficLight();
+                updateDisplay();
+                return;
+            }
+        }
     } else {
+        // Ascending (unchanged)
         remainingSeconds++;
         if (!finishNotified && remainingSeconds >= targetSeconds && targetSeconds > 0) {
             finishNotified = true;
@@ -241,9 +277,10 @@ function tick() {
     updateDisplay();
     updateTrafficLight();
 }
+
 function startTimer() {
     if (intervalId !== null) return;
-    if (mode === "down" && remainingSeconds <= 0) return;
+    if (mode === "down" && !continueDescending && remainingSeconds <= 0) return;
     flashColor('#10b981');
     intervalId = setInterval(tick, 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
@@ -348,6 +385,7 @@ if (helpBtn && helpModal) {
 }
 
 // Initial
+loadSettings();
 remainingSeconds = 0;
 targetSeconds = 0;
 updateDisplay();

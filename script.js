@@ -401,6 +401,35 @@ if (helpBtn && helpModal) {
     helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.style.display = 'none'; });
 }
 
+// Keyboard shortcuts
+window.addEventListener('keydown', (e) => {
+    // Ignore if user is typing in an input or contenteditable
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+
+    switch (e.key) {
+        case ' ': // Spacebar
+        case 'Space':
+            e.preventDefault();
+            toggleStartPause();
+            break;
+        case 'r':
+        case 'R':
+            e.preventDefault();
+            resetTimer();
+            break;
+        case 's':
+        case 'S':
+            e.preventDefault();
+            openSettingsModal();
+            break;
+        case 'e':
+        case 'E':
+            e.preventDefault();
+            if (typeof openEventModal === 'function') openEventModal();
+            break;
+    }
+});
+
 // ----- Initialisation -----
 loadContinuePreference();
 remainingSeconds = 0;

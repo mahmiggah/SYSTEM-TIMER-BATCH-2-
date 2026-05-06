@@ -325,10 +325,11 @@ function tick() {
     updateTrafficLight();
 }
 
-// Preparation tick (auto-starts main timer after prep ends)
+// Preparation tick (auto-starts main timer when done)
 function tickPreparation() {
     if (intervalId === null) return;
     if (remainingSeconds <= 0) {
+        // Preparation finished
         stopTimer();
         startPauseBtn.innerHTML = '▶ Start';
         isPreparing = false;
@@ -337,9 +338,12 @@ function tickPreparation() {
         remainingSeconds = originalMainRemaining;
         targetSeconds = originalTarget;
         updateDisplay();
-        // Auto-start the main timer
+        // Auto-start main timer if it has positive remaining or ascending
         if ((mode === "down" && remainingSeconds > 0) || (mode === "up")) {
-            startTimer(); // this will start the main timer (prep already consumed)
+            // Use startTimer – it will now go to normal start because isPreparing is false
+            flashColor('#10b981');
+            intervalId = setInterval(tick, 1000);
+            startPauseBtn.innerHTML = '⏸ Pause';
         }
         return;
     }
@@ -352,7 +356,7 @@ function startTimer() {
     if (mode === "down" && remainingSeconds <= 0 && !continueDescending) return;
 
     // If preparation is set and not already preparing
-    if (prepTimeSeconds > 0 && !isPreparing && !intervalId) {
+    if (prepTimeSeconds > 0 && !isPreparing && intervalId === null) {
         isPreparing = true;
         if (prepIndicator) prepIndicator.style.display = 'inline-block';
         originalMainRemaining = remainingSeconds;
@@ -371,11 +375,13 @@ function startTimer() {
     intervalId = setInterval(tick, 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
 }
+
 function pauseTimer() {
     if (intervalId === null) return;
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
 }
+
 function toggleStartPause() {
     if (intervalId === null) startTimer();
     else pauseTimer();

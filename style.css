@@ -337,6 +337,34 @@ kbd {
     color: white;
     border: none;
 }
+/* Floating help button (bottom‑right) */
+.help-corner {
+    position: fixed;
+    bottom: 70px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
+    font-size: 1.4rem;
+    cursor: pointer;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: 0.2s;
+}
+.help-corner:hover {
+    background: white;
+    transform: scale(1.05);
+}
+@media (max-width: 550px) {
+    .help-corner { bottom: 80px; width: 40px; height: 40px; font-size: 1.2rem; }
+}
 
 /* Toast message */
 .toast-message {

@@ -362,6 +362,27 @@ kbd {
     margin: 0 0.1rem;
 }
 
+.prep-indicator {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #ef4444;
+    background: #fee2e2;
+    display: inline-block;
+    padding: 0.2rem 0.8rem;
+    border-radius: 2rem;
+    margin-bottom: 0.5rem;
+}
+.prep-inputs {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+.prep-time-group {
+    margin: 0.5rem 0;
+    text-align: left;
+}
+
 /* ---------- TOAST MESSAGES ---------- */
 .toast-message {
     position: fixed;

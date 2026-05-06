@@ -18,7 +18,6 @@ const modalSeconds = document.getElementById('modalSeconds');
 const modalConfirm = document.getElementById('modalConfirmBtn');
 const modalCancel = document.getElementById('modalCancelBtn');
 
-// Event modal elements
 const eventModal = document.getElementById('eventModal');
 const eventHours = document.getElementById('eventHours');
 const eventMinutes = document.getElementById('eventMinutes');
@@ -32,27 +31,21 @@ const helpBtn = document.getElementById('helpBtn');
 const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
 
-// Continue descending checkbox
 const continueDescendingCheckbox = document.getElementById('continueDescending');
 
-// Traffic lights
 const greenLight = document.querySelector('.light.green');
 const yellowLight = document.querySelector('.light.yellow');
 const redLight = document.querySelector('.light.red');
 
-// Timer state
 let intervalId = null;
-let remainingSeconds = 0;
+let remainingSeconds = 0;      // current value (can be negative for descending)
 let targetSeconds = 0;
 let mode = "down";
 let halfTriggered = false;
 let finishNotified = false;
 let zeroCrossed = false;
+let events = [];                // { timeSeconds, color }
 
-// Events array
-let events = [];
-
-// Continue descending flag
 let continueDescending = false;
 
 // Load continue preference
@@ -71,7 +64,6 @@ if (continueDescendingCheckbox) {
     });
 }
 
-// Helper: format time (with negative sign)
 function formatTime(seconds) {
     const sign = seconds < 0 ? '-' : '';
     const absSecs = Math.abs(seconds);
@@ -93,7 +85,7 @@ function updateDisplay() {
     timerMinutesSpan.textContent = parts.mins;
     timerSecondsSpan.textContent = parts.secs;
 
-    // Timer text color: default dark, except red when descending negative and continue enabled
+    // Timer text color: default dark; red only when descending negative with continue
     if (mode === "down" && remainingSeconds < 0 && continueDescending) {
         timerDiv.style.color = '#ef4444';
     } else {
@@ -101,32 +93,30 @@ function updateDisplay() {
     }
 }
 
-// Traffic light event logic
+// ----- UNIFIED EVENT LOGIC (based on time left until finish) -----
+function getTimeLeft() {
+    if (mode === "down") {
+        return remainingSeconds;               // time remaining in descending mode
+    } else {
+        return targetSeconds - remainingSeconds; // time left to reach target in ascending mode
+    }
+}
+
 function getActiveEvent() {
     if (targetSeconds === 0 || events.length === 0) return null;
-    if (mode === "down") {
-        // Descending: next upcoming event (smallest event time ≥ remaining)
-        let candidate = null;
-        for (let ev of events) {
-            if (ev.timeSeconds >= remainingSeconds) {
-                if (candidate === null || ev.timeSeconds < candidate.timeSeconds) {
-                    candidate = ev;
-                }
+    const timeLeft = getTimeLeft();
+    if (timeLeft < 0) return null; // already finished/past zero
+
+    // Find the smallest event time that is >= timeLeft (next upcoming event)
+    let candidate = null;
+    for (let ev of events) {
+        if (ev.timeSeconds >= timeLeft) {
+            if (candidate === null || ev.timeSeconds < candidate.timeSeconds) {
+                candidate = ev;
             }
         }
-        return candidate;
-    } else {
-        // Ascending: largest event time ≤ elapsed
-        let candidate = null;
-        for (let ev of events) {
-            if (ev.timeSeconds <= remainingSeconds) {
-                if (candidate === null || ev.timeSeconds > candidate.timeSeconds) {
-                    candidate = ev;
-                }
-            }
-        }
-        return candidate;
     }
+    return candidate;
 }
 
 function updateTrafficLight() {
@@ -134,7 +124,7 @@ function updateTrafficLight() {
     yellowLight.classList.remove('active');
     redLight.classList.remove('active');
 
-    // Negative descending case: red light ON, timer text already handled in updateDisplay
+    // Negative descending case: red light ON (timer already handled in updateDisplay)
     if (mode === "down" && remainingSeconds < 0 && continueDescending) {
         redLight.classList.add('active');
         return;
@@ -150,7 +140,7 @@ function updateTrafficLight() {
     }
 }
 
-// Events management (render, add, remove)
+// ----- Events management (unchanged) -----
 function renderEventsList() {
     if (!eventsListDiv) return;
     eventsListDiv.innerHTML = '';
@@ -202,7 +192,6 @@ function clearAllEvents() {
     updateTrafficLight();
 }
 
-// Event modal handlers
 function openEventModal() {
     eventHours.value = 0;
     eventMinutes.value = 0;
@@ -220,7 +209,7 @@ eventConfirm.addEventListener('click', () => {
 eventCancel.addEventListener('click', closeEventModal);
 eventModal.addEventListener('click', (e) => { if (e.target === eventModal) closeEventModal(); });
 
-// Timer core functions
+// ----- Timer core -----
 function flashColor(color) {
     const original = timerDiv.style.color;
     timerDiv.style.color = color;
@@ -363,7 +352,7 @@ function resetTimer() {
     timerDiv.style.color = '#0f172a';
 }
 
-// Modal handlers
+// ----- Modal handlers -----
 function openSettingsModal() {
     const radioToCheck = mode === "down" ? document.querySelector('input[value="down"]') : document.querySelector('input[value="up"]');
     if (radioToCheck) radioToCheck.checked = true;
@@ -406,14 +395,13 @@ modeRadios.forEach(radio => {
 resetBtn.addEventListener('click', resetTimer);
 startPauseBtn.addEventListener('click', toggleStartPause);
 
-// Help modal
 if (helpBtn && helpModal) {
     helpBtn.addEventListener('click', () => helpModal.style.display = 'flex');
     closeHelpBtn.addEventListener('click', () => helpModal.style.display = 'none');
     helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.style.display = 'none'; });
 }
 
-// Initial
+// ----- Initialisation -----
 loadContinuePreference();
 remainingSeconds = 0;
 targetSeconds = 0;

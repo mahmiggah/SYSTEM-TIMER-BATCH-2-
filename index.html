@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Glass Timer – Traffic Light</title>
+    <title>Glass Timer</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f8fafc">
@@ -11,11 +11,10 @@
 </head>
 <body>
 <div class="app">
-    <div class="hotkey-note">
-    ⌨️ Hotkeys: <kbd>Space</kbd> Start/Pause · <kbd>R</kbd> Reset · <kbd>S</kbd> Settings · <kbd>E</kbd> Add Event
-</div>
-<div id="customLabel" class="custom-label" contenteditable="true">My Timer</div>
+    <!-- Custom editable label (replaces title) -->
+    <div id="customLabel" class="custom-label" contenteditable="true">My Timer</div>
 
+    <!-- Enlarged timer display -->
     <div class="timer">
         <span class="timer-hours">00</span>
         <span class="timer-colon">:</span>
@@ -29,18 +28,24 @@
         <span class="unit">SECONDS</span>
     </div>
 
-    <!-- Traffic light: green (left), yellow (middle), red (right) -->
+    <!-- Traffic light -->
     <div class="traffic-light">
         <div class="light green active"></div>
         <div class="light yellow"></div>
         <div class="light red"></div>
     </div>
 
+    <!-- Three main buttons -->
     <div class="controls">
         <button id="startPauseBtn">▶ Start</button>
         <button id="resetBtn">🔄 Reset</button>
         <button id="settingsBtn">⚙️ Settings</button>
     </div>
+</div>
+
+<!-- Fixed footer hotkey note -->
+<div class="hotkey-footer">
+    ⌨️ <strong>Hotkeys:</strong> <kbd>Space</kbd> Start/Pause · <kbd>R</kbd> Reset · <kbd>S</kbd> Settings · <kbd>E</kbd> Add Event
 </div>
 
 <!-- Settings Modal -->
@@ -54,15 +59,15 @@
                 <label><input type="radio" name="countMode" value="up"> Ascending</label>
             </div>
             <div class="continue-option">
-    <label><input type="checkbox" id="continueDescending"> Continue descending past zero</label>
-</div>
-        <div class="events-header">
-    <hr>
-    <h4>🚦 Traffic Light Events</h4>
-    <button id="addEventBtn" class="small-btn">+ Add Event</button>
-</div>
-<div id="eventsList" class="events-list"></div>
+                <label><input type="checkbox" id="continueDescending"> Continue descending past zero</label>
+            </div>
         </div>
+        <div class="events-header">
+            <hr>
+            <h4>🚦 Traffic Light Events</h4>
+            <button id="addEventBtn" class="small-btn">+ Add Event</button>
+        </div>
+        <div id="eventsList" class="events-list"></div>
         <div class="modal-buttons">
             <button id="closeSettingsBtn">Close</button>
         </div>
@@ -82,24 +87,6 @@
     </div>
 </div>
 
-<!-- Help Modal -->
-<div id="helpModal" class="modal">
-    <div class="modal-content" style="max-width: 500px; text-align: left;">
-        <h3 style="text-align: center;">📘 Timer Guide</h3>
-        <div style="margin-top: 1rem;">
-            <p><strong>▶ Start / ⏸</strong> – starts/pauses the timer.</p>
-            <p><strong>🔄 Reset</strong> – resets to last set duration.</p>
-            <p><strong>⚙️ Settings</strong> – set time or change mode (descending/ascending).</p>
-            <p><strong>⏳ Descending</strong> – stops at 0. <strong>Ascending</strong> – continues beyond target.</p>
-            <p><strong>🚦 Traffic light</strong> – green (start), yellow (middle), red (near end / beyond).</p>
-        </div>
-        <div class="modal-buttons" style="margin-top: 1.5rem;">
-            <button id="closeHelpBtn" style="background:#0f172a; color:white;">Got it</button>
-        </div>
-    </div>
-</div>
-
-<!-- Add / Edit Traffic Light Event Modal -->
 <!-- Traffic Light Event Modal -->
 <div id="eventModal" class="modal">
     <div class="modal-content">
@@ -121,11 +108,24 @@
     </div>
 </div>
 
-    <!-- Hotkey note (bottom of page) -->
-<div class="hotkey-footer">
-    ⌨️ <strong>Hotkeys:</strong> <kbd>Space</kbd> Start/Pause · <kbd>R</kbd> Reset · <kbd>S</kbd> Settings · <kbd>E</kbd> Add Event
+<!-- Help Modal (optional) -->
+<div id="helpModal" class="modal">
+    <div class="modal-content" style="max-width: 500px; text-align: left;">
+        <h3 style="text-align: center;">📘 Timer Guide</h3>
+        <div style="margin-top: 1rem;">
+            <p><strong>▶ Start / ⏸</strong> – starts/pauses the timer.</p>
+            <p><strong>🔄 Reset</strong> – resets to last set duration.</p>
+            <p><strong>⚙️ Settings</strong> – set time, toggle mode, continue descending, and manage traffic light events.</p>
+            <p><strong>🚦 Events</strong> – add times (in seconds) when the traffic light changes color.</p>
+            <p><strong>✏️ Custom Label</strong> – click the top text to rename your timer.</p>
+            <p><strong>⌨️ Hotkeys</strong> – <kbd>Space</kbd> Start/Pause, <kbd>R</kbd> Reset, <kbd>S</kbd> Settings, <kbd>E</kbd> Add Event.</p>
+        </div>
+        <div class="modal-buttons" style="margin-top: 1.5rem;">
+            <button id="closeHelpBtn" style="background:#0f172a; color:white;">Got it</button>
+        </div>
+    </div>
 </div>
-    
+
 <script src="script.js"></script>
 <script>
     if ('serviceWorker' in navigator) {

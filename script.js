@@ -278,7 +278,7 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Main timer tick
+// Main timer tick (no preparation)
 function tick() {
     if (intervalId === null) return;
     if (mode === "down") {
@@ -325,7 +325,7 @@ function tick() {
     updateTrafficLight();
 }
 
-// Preparation tick (auto-starts main timer after prep ends)
+// Preparation tick (ends and then starts main timer without re-entering prep)
 function tickPreparation() {
     if (intervalId === null) return;
     if (remainingSeconds <= 0) {
@@ -336,8 +336,9 @@ function tickPreparation() {
         remainingSeconds = originalMainRemaining;
         targetSeconds = originalTarget;
         updateDisplay();
+        // Start main timer directly (bypass preparation check)
         if ((mode === "down" && remainingSeconds > 0) || (mode === "up")) {
-            startTimer();
+            startMainTimer();
         }
         return;
     }
@@ -345,6 +346,16 @@ function tickPreparation() {
     updateDisplay();
 }
 
+// Start main timer without any preparation logic
+function startMainTimer() {
+    if (intervalId !== null) return;
+    if (mode === "down" && remainingSeconds <= 0 && !continueDescending) return;
+    flashColor('#10b981');
+    intervalId = setInterval(tick, 1000);
+    startPauseBtn.innerHTML = '⏸ Pause';
+}
+
+// Main start timer (handles preparation)
 function startTimer() {
     if (intervalId !== null) return;
     if (mode === "down" && remainingSeconds <= 0 && !continueDescending) return;
@@ -363,10 +374,9 @@ function startTimer() {
         return;
     }
 
-    flashColor('#10b981');
-    intervalId = setInterval(tick, 1000);
-    startPauseBtn.innerHTML = '⏸ Pause';
+    startMainTimer();
 }
+
 function pauseTimer() {
     if (intervalId === null) return;
     stopTimer();

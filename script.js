@@ -408,3 +408,20 @@ targetSeconds = 0;
 updateDisplay();
 updateTrafficLight();
 timerDiv.style.color = '#0f172a';
+
+// Custom label persistence
+const customLabel = document.getElementById('customLabel');
+if (customLabel) {
+    const savedLabel = localStorage.getItem('timerCustomLabel');
+    if (savedLabel) customLabel.textContent = savedLabel;
+    customLabel.addEventListener('blur', () => {
+        localStorage.setItem('timerCustomLabel', customLabel.textContent);
+    });
+    // Prevent Enter from creating new line
+    customLabel.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            customLabel.blur();
+        }
+    });
+}

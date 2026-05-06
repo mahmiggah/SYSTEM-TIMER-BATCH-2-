@@ -1,4 +1,4 @@
-// DOM elements
+// DOM elements (same as before)
 const timerHoursSpan = document.querySelector('.timer-hours');
 const timerMinutesSpan = document.querySelector('.timer-minutes');
 const timerSecondsSpan = document.querySelector('.timer-seconds');
@@ -18,7 +18,6 @@ const modalSeconds = document.getElementById('modalSeconds');
 const modalConfirm = document.getElementById('modalConfirmBtn');
 const modalCancel = document.getElementById('modalCancelBtn');
 
-// Event modal elements
 const eventModal = document.getElementById('eventModal');
 const eventHours = document.getElementById('eventHours');
 const eventMinutes = document.getElementById('eventMinutes');
@@ -32,15 +31,11 @@ const helpBtn = document.getElementById('helpBtn');
 const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
 
-// Continue descending checkbox
 const continueDescendingCheckbox = document.getElementById('continueDescending');
-
-// Traffic lights
 const greenLight = document.querySelector('.light.green');
 const yellowLight = document.querySelector('.light.yellow');
 const redLight = document.querySelector('.light.red');
 
-// Timer state
 let intervalId = null;
 let remainingSeconds = 0;
 let targetSeconds = 0;
@@ -48,14 +43,40 @@ let mode = "down";
 let halfTriggered = false;
 let finishNotified = false;
 let zeroCrossed = false;
-
-// Events array
 let events = [];
-
-// Continue descending flag
 let continueDescending = false;
 
-// Load continue preference
+const timerDiv = document.querySelector('.timer');
+
+// Helper: set timer text color temporarily
+let colorTimeout = null;
+function flashTimerTextColor(color) {
+    if (colorTimeout) clearTimeout(colorTimeout);
+    // If we are in negative continue, do not override red
+    if (mode === "down" && remainingSeconds < 0 && continueDescending) return;
+    const original = timerDiv.style.color;
+    timerDiv.style.color = color;
+    colorTimeout = setTimeout(() => {
+        // Only revert if still the same color and not forced to red by negative condition
+        if (!(mode === "down" && remainingSeconds < 0 && continueDescending)) {
+            timerDiv.style.color = '#0f172a';
+        }
+        colorTimeout = null;
+    }, 500);
+}
+
+function setTimerTextPermanentRed() {
+    if (colorTimeout) clearTimeout(colorTimeout);
+    timerDiv.style.color = '#ef4444';
+}
+
+function revertTimerTextToDefault() {
+    if (colorTimeout) clearTimeout(colorTimeout);
+    if (!(mode === "down" && remainingSeconds < 0 && continueDescending)) {
+        timerDiv.style.color = '#0f172a';
+    }
+}
+
 function loadContinuePreference() {
     const saved = localStorage.getItem('continueDescending');
     if (saved !== null) continueDescending = (saved === 'true');
@@ -68,10 +89,15 @@ if (continueDescendingCheckbox) {
     continueDescendingCheckbox.addEventListener('change', () => {
         continueDescending = continueDescendingCheckbox.checked;
         saveContinuePreference();
+        if (continueDescending && mode === "down" && remainingSeconds < 0) {
+            setTimerTextPermanentRed();
+        } else {
+            revertTimerTextToDefault();
+        }
+        updateTrafficLight();
     });
 }
 
-// Helper: format time (with negative sign)
 function formatTime(seconds) {
     const sign = seconds < 0 ? '-' : '';
     const absSecs = Math.abs(seconds);
@@ -85,44 +111,27 @@ function formatTime(seconds) {
     };
 }
 
-const timerDiv = document.querySelector('.timer');
-
-function setTimerTextColor(color, permanently = false) {
-    if (permanently) {
-        timerDiv.style.color = color;
-    } else {
-        const original = timerDiv.style.color;
-        timerDiv.style.color = color;
-        setTimeout(() => {
-            if (timerDiv.style.color === color) {
-                timerDiv.style.color = original || '';
-            }
-        }, 500);
-    }
-}
-
 function updateDisplay() {
     const parts = formatTime(remainingSeconds);
     timerHoursSpan.textContent = parts.hrs;
     timerMinutesSpan.textContent = parts.mins;
     timerSecondsSpan.textContent = parts.secs;
-
-    // If in descending continue past zero and negative, keep red permanently
+    // If in negative continue, ensure red permanent
     if (mode === "down" && remainingSeconds < 0 && continueDescending) {
-        timerDiv.style.color = '#ef4444';
+        if (timerDiv.style.color !== '#ef4444') setTimerTextPermanentRed();
+    } else if (!colorTimeout && timerDiv.style.color !== '#0f172a') {
+        // If no ongoing flash and not negative, set default
+        timerDiv.style.color = '#0f172a';
     }
 }
 
-// Traffic light event logic
 function getActiveEvent() {
     if (targetSeconds === 0 || events.length === 0) return null;
     if (mode === "down") {
         let candidate = null;
         for (let ev of events) {
             if (ev.timeSeconds >= remainingSeconds) {
-                if (candidate === null || ev.timeSeconds < candidate.timeSeconds) {
-                    candidate = ev;
-                }
+                if (candidate === null || ev.timeSeconds < candidate.timeSeconds) candidate = ev;
             }
         }
         return candidate;
@@ -130,9 +139,7 @@ function getActiveEvent() {
         let candidate = null;
         for (let ev of events) {
             if (ev.timeSeconds <= remainingSeconds) {
-                if (candidate === null || ev.timeSeconds > candidate.timeSeconds) {
-                    candidate = ev;
-                }
+                if (candidate === null || ev.timeSeconds > candidate.timeSeconds) candidate = ev;
             }
         }
         return candidate;
@@ -144,40 +151,19 @@ function updateTrafficLight() {
     yellowLight.classList.remove('active');
     redLight.classList.remove('active');
 
-    // Negative descending case: red light ON and timer text stays red (already handled in updateDisplay)
     if (mode === "down" && remainingSeconds < 0 && continueDescending) {
         redLight.classList.add('active');
-        timerDiv.style.color = '#ef4444';
         return;
     }
-
     const active = getActiveEvent();
-    if (!active) {
-        // No active event: revert timer text to default if not negative
-        if (!(mode === "down" && remainingSeconds < 0 && continueDescending)) {
-            timerDiv.style.color = '#0f172a';
-        }
-        return;
-    }
-
-    let colorClass = '';
-    let rgb = '';
+    if (!active) return;
     switch (active.color) {
-        case 'green': colorClass = 'active'; rgb = '#10b981'; break;
-        case 'yellow': colorClass = 'active'; rgb = '#eab308'; break;
-        case 'red': colorClass = 'active'; rgb = '#ef4444'; break;
-        default: return;
-    }
-    if (colorClass === 'active') {
-        if (active.color === 'green') greenLight.classList.add('active');
-        else if (active.color === 'yellow') yellowLight.classList.add('active');
-        else if (active.color === 'red') redLight.classList.add('active');
-        // Flash the timer text to the event color (temporary)
-        setTimerTextColor(rgb, false);
+        case 'green': greenLight.classList.add('active'); flashTimerTextColor('#10b981'); break;
+        case 'yellow': yellowLight.classList.add('active'); flashTimerTextColor('#eab308'); break;
+        case 'red': redLight.classList.add('active'); flashTimerTextColor('#ef4444'); break;
     }
 }
 
-// Events management
 function renderEventsList() {
     if (!eventsListDiv) return;
     eventsListDiv.innerHTML = '';
@@ -187,13 +173,7 @@ function renderEventsList() {
         const timeStr = (t.hrs !== '00' ? `${t.hrs}:` : '') + `${t.mins}:${t.secs}`;
         const div = document.createElement('div');
         div.className = 'event-item';
-        div.innerHTML = `
-            <div>
-                <span class="color-badge ${ev.color}"></span>
-                <span class="time">${timeStr}</span>
-            </div>
-            <button data-index="${idx}">✖</button>
-        `;
+        div.innerHTML = `<div><span class="color-badge ${ev.color}"></span><span class="time">${timeStr}</span></div><button data-index="${idx}">✖</button>`;
         div.querySelector('button').addEventListener('click', () => {
             events.splice(idx, 1);
             renderEventsList();
@@ -202,6 +182,7 @@ function renderEventsList() {
         eventsListDiv.appendChild(div);
     });
 }
+
 function addEvent(hours, minutes, seconds, color) {
     let h = parseInt(hours) || 0;
     let m = parseInt(minutes) || 0;
@@ -223,6 +204,7 @@ function addEvent(hours, minutes, seconds, color) {
     updateTrafficLight();
     return true;
 }
+
 function clearAllEvents() {
     events = [];
     renderEventsList();
@@ -246,12 +228,6 @@ eventConfirm.addEventListener('click', () => {
 eventCancel.addEventListener('click', closeEventModal);
 eventModal.addEventListener('click', (e) => { if (e.target === eventModal) closeEventModal(); });
 
-// Timer core
-function flashColor(color) {
-    const original = timerDiv.style.color;
-    timerDiv.style.color = color;
-    setTimeout(() => { if (timerDiv.style.color === color) timerDiv.style.color = original; }, 400);
-}
 function stopTimer() {
     if (intervalId !== null) {
         clearInterval(intervalId);
@@ -282,7 +258,6 @@ function showToast(message) {
 
 function tick() {
     if (intervalId === null) return;
-
     if (mode === "down") {
         if (remainingSeconds <= 0 && !continueDescending) {
             if (remainingSeconds === 0) {
@@ -291,7 +266,6 @@ function tick() {
                 if (!zeroCrossed) {
                     playBeep(880, 1);
                     showToast('⏰ Time\'s up!');
-                    flashColor('#dc2626');
                     zeroCrossed = true;
                 }
                 updateTrafficLight();
@@ -304,11 +278,9 @@ function tick() {
             zeroCrossed = true;
             playBeep(880, 1);
             showToast('⏰ Time\'s up! (continuing)');
-            flashColor('#dc2626');
         }
         if (!halfTriggered && targetSeconds > 0 && remainingSeconds <= targetSeconds / 2 && remainingSeconds >= 0) {
             halfTriggered = true;
-            flashColor('#eab308');
         }
     } else {
         remainingSeconds++;
@@ -316,21 +288,17 @@ function tick() {
             finishNotified = true;
             playBeep(880, 1);
             showToast('⏰ Target reached – continuing');
-            flashColor('#dc2626');
         }
         if (!halfTriggered && targetSeconds > 0 && remainingSeconds >= targetSeconds / 2) {
             halfTriggered = true;
-            flashColor('#eab308');
         }
     }
     updateDisplay();
     updateTrafficLight();
 }
-
 function startTimer() {
     if (intervalId !== null) return;
     if (mode === "down" && remainingSeconds <= 0 && !continueDescending) return;
-    flashColor('#10b981');
     intervalId = setInterval(tick, 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
 }
@@ -357,9 +325,10 @@ function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     halfTriggered = false;
     finishNotified = false;
     zeroCrossed = false;
+    if (colorTimeout) clearTimeout(colorTimeout);
+    timerDiv.style.color = '#0f172a';
     updateDisplay();
     updateTrafficLight();
-    timerDiv.style.color = '#0f172a';
 }
 function setModeFromRadios() {
     const selected = document.querySelector('input[name="countMode"]:checked').value;
@@ -371,9 +340,10 @@ function setModeFromRadios() {
         halfTriggered = false;
         finishNotified = false;
         zeroCrossed = false;
+        if (colorTimeout) clearTimeout(colorTimeout);
+        timerDiv.style.color = '#0f172a';
         updateDisplay();
         updateTrafficLight();
-        timerDiv.style.color = '#0f172a';
     }
 }
 function resetTimer() {
@@ -384,12 +354,12 @@ function resetTimer() {
     halfTriggered = false;
     finishNotified = false;
     zeroCrossed = false;
+    if (colorTimeout) clearTimeout(colorTimeout);
+    timerDiv.style.color = '#0f172a';
     updateDisplay();
     updateTrafficLight();
-    timerDiv.style.color = '#0f172a';
 }
 
-// Modal handlers
 function openSettingsModal() {
     const radioToCheck = mode === "down" ? document.querySelector('input[value="down"]') : document.querySelector('input[value="up"]');
     if (radioToCheck) radioToCheck.checked = true;
@@ -422,22 +392,17 @@ modalCancel.addEventListener('click', closeTimeModal);
 timeModal.addEventListener('click', (e) => { if (e.target === timeModal) closeTimeModal(); });
 
 modeRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-        setModeFromRadios();
-    });
+    radio.addEventListener('change', () => { setModeFromRadios(); });
 });
-
 resetBtn.addEventListener('click', resetTimer);
 startPauseBtn.addEventListener('click', toggleStartPause);
 
-// Help modal
 if (helpBtn && helpModal) {
     helpBtn.addEventListener('click', () => helpModal.style.display = 'flex');
     closeHelpBtn.addEventListener('click', () => helpModal.style.display = 'none');
     helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.style.display = 'none'; });
 }
 
-// Initial
 loadContinuePreference();
 remainingSeconds = 0;
 targetSeconds = 0;

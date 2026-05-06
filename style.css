@@ -39,12 +39,12 @@ body {
     justify-content: center;
     align-items: baseline;
     gap: 1rem;
-    font-size: 5.5rem;
+    font-size: 7rem;
     font-weight: 600;
     font-family: 'JetBrains Mono', 'SF Mono', monospace;
     background: white;
     border-radius: 2rem;
-    padding: 1.2rem 1.5rem;
+    padding: 1.2rem 1rem;
     margin-bottom: 0.5rem;
     color: #0f172a;
 }

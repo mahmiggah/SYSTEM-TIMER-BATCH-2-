@@ -32,11 +32,17 @@ const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
 
 const continueDescendingCheckbox = document.getElementById('continueDescending');
+const prepIndicator = document.getElementById('prepIndicator');
+const prepHoursInput = document.getElementById('prepHours');
+const prepMinutesInput = document.getElementById('prepMinutes');
+const prepSecondsInput = document.getElementById('prepSeconds');
 
 const greenLight = document.querySelector('.light.green');
 const yellowLight = document.querySelector('.light.yellow');
 const redLight = document.querySelector('.light.red');
+const timerDiv = document.querySelector('.timer');
 
+// Timer state
 let intervalId = null;
 let remainingSeconds = 0;      // current value (can be negative for descending)
 let targetSeconds = 0;
@@ -46,9 +52,16 @@ let finishNotified = false;
 let zeroCrossed = false;
 let events = [];                // { timeSeconds, color }
 
+// Preparation state
+let prepTimeSeconds = 0;        // total seconds of preparation
+let isPreparing = false;
+let originalMainRemaining = 0;
+let originalTarget = 0;
+
+// Continue descending flag
 let continueDescending = false;
 
-// Load continue preference
+// ---------- Load / save preferences ----------
 function loadContinuePreference() {
     const saved = localStorage.getItem('continueDescending');
     if (saved !== null) continueDescending = (saved === 'true');
@@ -64,6 +77,53 @@ if (continueDescendingCheckbox) {
     });
 }
 
+function loadPrepTime() {
+    const saved = localStorage.getItem('prepTimeSeconds');
+    if (saved !== null) prepTimeSeconds = parseInt(saved);
+    if (prepHoursInput) {
+        const hrs = Math.floor(prepTimeSeconds / 3600);
+        const mins = Math.floor((prepTimeSeconds % 3600) / 60);
+        const secs = prepTimeSeconds % 60;
+        prepHoursInput.value = hrs;
+        prepMinutesInput.value = mins;
+        prepSecondsInput.value = secs;
+    }
+}
+function savePrepTime() {
+    localStorage.setItem('prepTimeSeconds', prepTimeSeconds);
+}
+if (prepHoursInput && prepMinutesInput && prepSecondsInput) {
+    const updatePrep = () => {
+        let h = parseInt(prepHoursInput.value) || 0;
+        let m = parseInt(prepMinutesInput.value) || 0;
+        let s = parseInt(prepSecondsInput.value) || 0;
+        if (s > 59) s = 59;
+        if (m > 59) m = 59;
+        prepTimeSeconds = h * 3600 + m * 60 + s;
+        savePrepTime();
+    };
+    prepHoursInput.addEventListener('change', updatePrep);
+    prepMinutesInput.addEventListener('change', updatePrep);
+    prepSecondsInput.addEventListener('change', updatePrep);
+}
+
+// Custom label persistence
+const customLabel = document.getElementById('customLabel');
+if (customLabel) {
+    const savedLabel = localStorage.getItem('timerCustomLabel');
+    if (savedLabel) customLabel.textContent = savedLabel;
+    customLabel.addEventListener('blur', () => {
+        localStorage.setItem('timerCustomLabel', customLabel.textContent);
+    });
+    customLabel.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            customLabel.blur();
+        }
+    });
+}
+
+// ---------- Helper functions ----------
 function formatTime(seconds) {
     const sign = seconds < 0 ? '-' : '';
     const absSecs = Math.abs(seconds);
@@ -77,15 +137,13 @@ function formatTime(seconds) {
     };
 }
 
-const timerDiv = document.querySelector('.timer');
-
 function updateDisplay() {
     const parts = formatTime(remainingSeconds);
     timerHoursSpan.textContent = parts.hrs;
     timerMinutesSpan.textContent = parts.mins;
     timerSecondsSpan.textContent = parts.secs;
 
-    // Timer text color: default dark; red only when descending negative with continue
+    // Text color: default dark; red only when descending negative with continue
     if (mode === "down" && remainingSeconds < 0 && continueDescending) {
         timerDiv.style.color = '#ef4444';
     } else {
@@ -93,7 +151,7 @@ function updateDisplay() {
     }
 }
 
-// ----- UNIFIED EVENT LOGIC (based on time left until finish) -----
+// ----- Unified event logic (based on time left until finish) -----
 function getTimeLeft() {
     if (mode === "down") {
         return remainingSeconds;               // time remaining in descending mode
@@ -105,9 +163,8 @@ function getTimeLeft() {
 function getActiveEvent() {
     if (targetSeconds === 0 || events.length === 0) return null;
     const timeLeft = getTimeLeft();
-    if (timeLeft < 0) return null; // already finished/past zero
+    if (timeLeft < 0) return null; // already past zero
 
-    // Find the smallest event time that is >= timeLeft (next upcoming event)
     let candidate = null;
     for (let ev of events) {
         if (ev.timeSeconds >= timeLeft) {
@@ -124,7 +181,6 @@ function updateTrafficLight() {
     yellowLight.classList.remove('active');
     redLight.classList.remove('active');
 
-    // Negative descending case: red light ON (timer already handled in updateDisplay)
     if (mode === "down" && remainingSeconds < 0 && continueDescending) {
         redLight.classList.add('active');
         return;
@@ -132,7 +188,6 @@ function updateTrafficLight() {
 
     const active = getActiveEvent();
     if (!active) return;
-
     switch (active.color) {
         case 'green': greenLight.classList.add('active'); break;
         case 'yellow': yellowLight.classList.add('active'); break;
@@ -140,7 +195,7 @@ function updateTrafficLight() {
     }
 }
 
-// ----- Events management (unchanged) -----
+// ----- Events management -----
 function renderEventsList() {
     if (!eventsListDiv) return;
     eventsListDiv.innerHTML = '';
@@ -192,6 +247,7 @@ function clearAllEvents() {
     updateTrafficLight();
 }
 
+// ----- Event modal handlers -----
 function openEventModal() {
     eventHours.value = 0;
     eventMinutes.value = 0;
@@ -209,7 +265,7 @@ eventConfirm.addEventListener('click', () => {
 eventCancel.addEventListener('click', closeEventModal);
 eventModal.addEventListener('click', (e) => { if (e.target === eventModal) closeEventModal(); });
 
-// ----- Timer core -----
+// ----- Timer core functions (preparation and main) -----
 function flashColor(color) {
     const original = timerDiv.style.color;
     timerDiv.style.color = color;
@@ -243,6 +299,7 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
+// Main timer tick (no preparation)
 function tick() {
     if (intervalId === null) return;
 
@@ -290,25 +347,74 @@ function tick() {
     updateTrafficLight();
 }
 
+// Preparation tick
+function tickPreparation() {
+    if (intervalId === null) return;
+    if (remainingSeconds <= 0) {
+        stopTimer();
+        startPauseBtn.innerHTML = '▶ Start';
+        isPreparing = false;
+        if (prepIndicator) prepIndicator.style.display = 'none';
+        remainingSeconds = originalMainRemaining;
+        targetSeconds = originalTarget;
+        updateDisplay();
+        // Automatically start main timer
+        if ((mode === "down" && remainingSeconds > 0) || (mode === "up")) {
+            startTimer(); // will start main timer (prep finished)
+        }
+        return;
+    }
+    remainingSeconds--;
+    updateDisplay();
+    // No traffic light updates during preparation
+}
+
 function startTimer() {
     if (intervalId !== null) return;
+    // If in descending mode and time <=0 without continue, cannot start
     if (mode === "down" && remainingSeconds <= 0 && !continueDescending) return;
+
+    // Check if preparation time should be used
+    if (prepTimeSeconds > 0 && !isPreparing && !intervalId) {
+        isPreparing = true;
+        if (prepIndicator) prepIndicator.style.display = 'inline-block';
+        originalMainRemaining = remainingSeconds;
+        originalTarget = targetSeconds;
+        remainingSeconds = prepTimeSeconds;
+        targetSeconds = prepTimeSeconds; // temporary target for prep display
+        updateDisplay();
+        flashColor('#10b981');
+        intervalId = setInterval(tickPreparation, 1000);
+        startPauseBtn.innerHTML = '⏸ Pause';
+        return;
+    }
+
+    // Normal start (no prep or prep already done)
     flashColor('#10b981');
     intervalId = setInterval(tick, 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
 }
+
 function pauseTimer() {
     if (intervalId === null) return;
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
+    // If in preparation mode, keep remainingSeconds as is (preparation progress not lost)
 }
+
 function toggleStartPause() {
     if (intervalId === null) startTimer();
     else pauseTimer();
 }
+
 function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
+    // If preparation was active, clear it
+    if (isPreparing) {
+        isPreparing = false;
+        if (prepIndicator) prepIndicator.style.display = 'none';
+    }
     let h = parseInt(hours) || 0;
     let m = parseInt(minutes) || 0;
     let s = parseInt(seconds) || 0;
@@ -324,11 +430,19 @@ function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     updateTrafficLight();
     timerDiv.style.color = '#0f172a';
 }
+
 function setModeFromRadios() {
     const selected = document.querySelector('input[name="countMode"]:checked').value;
     const newMode = selected === "up" ? "up" : "down";
     if (newMode !== mode) {
         mode = newMode;
+        if (isPreparing) {
+            // Reset prep state? We'll cancel prep.
+            isPreparing = false;
+            if (prepIndicator) prepIndicator.style.display = 'none';
+            stopTimer();
+            startPauseBtn.innerHTML = '▶ Start';
+        }
         if (mode === "down") remainingSeconds = targetSeconds;
         else remainingSeconds = 0;
         halfTriggered = false;
@@ -339,11 +453,18 @@ function setModeFromRadios() {
         timerDiv.style.color = '#0f172a';
     }
 }
+
 function resetTimer() {
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
-    if (mode === "down") remainingSeconds = targetSeconds;
-    else remainingSeconds = 0;
+    if (isPreparing) {
+        isPreparing = false;
+        if (prepIndicator) prepIndicator.style.display = 'none';
+        remainingSeconds = (mode === "down") ? targetSeconds : 0;
+    } else {
+        if (mode === "down") remainingSeconds = targetSeconds;
+        else remainingSeconds = 0;
+    }
     halfTriggered = false;
     finishNotified = false;
     zeroCrossed = false;
@@ -395,19 +516,18 @@ modeRadios.forEach(radio => {
 resetBtn.addEventListener('click', resetTimer);
 startPauseBtn.addEventListener('click', toggleStartPause);
 
+// Help modal
 if (helpBtn && helpModal) {
     helpBtn.addEventListener('click', () => helpModal.style.display = 'flex');
     closeHelpBtn.addEventListener('click', () => helpModal.style.display = 'none');
     helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.style.display = 'none'; });
 }
 
-// Keyboard shortcuts
+// ----- Keyboard shortcuts -----
 window.addEventListener('keydown', (e) => {
-    // Ignore if user is typing in an input or contenteditable
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-
     switch (e.key) {
-        case ' ': // Spacebar
+        case ' ':
         case 'Space':
             e.preventDefault();
             toggleStartPause();
@@ -432,25 +552,9 @@ window.addEventListener('keydown', (e) => {
 
 // ----- Initialisation -----
 loadContinuePreference();
+loadPrepTime();
 remainingSeconds = 0;
 targetSeconds = 0;
 updateDisplay();
 updateTrafficLight();
 timerDiv.style.color = '#0f172a';
-
-// Custom label persistence
-const customLabel = document.getElementById('customLabel');
-if (customLabel) {
-    const savedLabel = localStorage.getItem('timerCustomLabel');
-    if (savedLabel) customLabel.textContent = savedLabel;
-    customLabel.addEventListener('blur', () => {
-        localStorage.setItem('timerCustomLabel', customLabel.textContent);
-    });
-    // Prevent Enter from creating new line
-    customLabel.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            customLabel.blur();
-        }
-    });
-}

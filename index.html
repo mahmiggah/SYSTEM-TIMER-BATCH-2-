@@ -50,10 +50,12 @@
                 <label><input type="radio" name="countMode" value="down" checked> Descending</label>
                 <label><input type="radio" name="countMode" value="up"> Ascending</label>
             </div>
-            <div class="traffic-thresholds">
-                <label>🟡 Yellow when remaining ≤ <input type="number" id="yellowThreshold" value="10" step="1" min="0"> seconds</label>
-                <label>🔴 Red when remaining ≤ <input type="number" id="redThreshold" value="3" step="1" min="0"> seconds</label>
-            </div>
+        <div class="events-header">
+    <hr>
+    <h4>🚦 Traffic Light Events</h4>
+    <button id="addEventBtn" class="small-btn">+ Add Event</button>
+</div>
+<div id="eventsList" class="events-list"></div>
         </div>
         <div class="modal-buttons">
             <button id="closeSettingsBtn">Close</button>
@@ -92,6 +94,7 @@
 </div>
 
 <!-- Add / Edit Traffic Light Event Modal -->
+<!-- Traffic Light Event Modal -->
 <div id="eventModal" class="modal">
     <div class="modal-content">
         <h3>Add Traffic Light Event</h3>

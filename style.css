@@ -299,6 +299,25 @@ button:hover {
     display: flex;
     justify-content: center;
 }
+.custom-label {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #0f172a;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    cursor: text;
+    outline: none;
+    padding: 0.25rem;
+    border-radius: 1rem;
+    transition: background 0.1s;
+}
+.custom-label:hover {
+    background: #f1f5f9;
+}
+.custom-label:focus {
+    background: #f8fafc;
+    outline: 1px solid #cbd5e1;
+}
 
 /* ---------- TOAST MESSAGES ---------- */
 .toast-message {

@@ -325,25 +325,19 @@ function tick() {
     updateTrafficLight();
 }
 
-// Preparation tick (auto-starts main timer when done)
+// Preparation tick (auto-starts main timer after prep ends)
 function tickPreparation() {
     if (intervalId === null) return;
     if (remainingSeconds <= 0) {
-        // Preparation finished
         stopTimer();
         startPauseBtn.innerHTML = '▶ Start';
         isPreparing = false;
         if (prepIndicator) prepIndicator.style.display = 'none';
-        // Restore original main timer values
         remainingSeconds = originalMainRemaining;
         targetSeconds = originalTarget;
         updateDisplay();
-        // Auto-start main timer if it has positive remaining or ascending
         if ((mode === "down" && remainingSeconds > 0) || (mode === "up")) {
-            // Use startTimer – it will now go to normal start because isPreparing is false
-            flashColor('#10b981');
-            intervalId = setInterval(tick, 1000);
-            startPauseBtn.innerHTML = '⏸ Pause';
+            startTimer();
         }
         return;
     }
@@ -355,14 +349,13 @@ function startTimer() {
     if (intervalId !== null) return;
     if (mode === "down" && remainingSeconds <= 0 && !continueDescending) return;
 
-    // If preparation is set and not already preparing
-    if (prepTimeSeconds > 0 && !isPreparing && intervalId === null) {
+    if (prepTimeSeconds > 0 && !isPreparing && !intervalId) {
         isPreparing = true;
         if (prepIndicator) prepIndicator.style.display = 'inline-block';
         originalMainRemaining = remainingSeconds;
         originalTarget = targetSeconds;
         remainingSeconds = prepTimeSeconds;
-        targetSeconds = prepTimeSeconds; // temporary target for prep display
+        targetSeconds = prepTimeSeconds;
         updateDisplay();
         flashColor('#10b981');
         intervalId = setInterval(tickPreparation, 1000);
@@ -370,18 +363,15 @@ function startTimer() {
         return;
     }
 
-    // Normal start (no prep or prep already done)
     flashColor('#10b981');
     intervalId = setInterval(tick, 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
 }
-
 function pauseTimer() {
     if (intervalId === null) return;
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
 }
-
 function toggleStartPause() {
     if (intervalId === null) startTimer();
     else pauseTimer();
@@ -458,7 +448,9 @@ function openSettingsModal() {
 function closeSettingsModal() { settingsModal.style.display = 'none'; }
 settingsBtn.addEventListener('click', openSettingsModal);
 closeSettingsBtn.addEventListener('click', closeSettingsModal);
-settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettingsModal(); });
+settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) closeSettingsModal();
+});
 
 setTimeBtn.addEventListener('click', () => {
     closeSettingsModal();
@@ -478,7 +470,11 @@ modalConfirm.addEventListener('click', () => {
     closeTimeModal();
     openSettingsModal();
 });
-modalCancel.addEventListener('click', closeTimeModal);
+// FIX: Cancel button now reopens settings modal
+modalCancel.addEventListener('click', () => {
+    closeTimeModal();
+    openSettingsModal();
+});
 timeModal.addEventListener('click', (e) => { if (e.target === timeModal) closeTimeModal(); });
 
 modeRadios.forEach(radio => {

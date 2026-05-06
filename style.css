@@ -262,3 +262,26 @@ button:hover {
     .controls { gap: 0.8rem; }
     button { padding: 0.5rem 1rem; font-size: 0.85rem; }
 }
+
+.thresholds {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    text-align: left;
+    align-items: center;
+}
+.thresholds label {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 200px;
+    gap: 1rem;
+}
+.thresholds input {
+    width: 70px;
+    padding: 0.2rem;
+    text-align: center;
+    border-radius: 1rem;
+    border: 1px solid #cbd5e1;
+}

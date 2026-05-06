@@ -1,4 +1,4 @@
-// DOM elements (timer, buttons, modals)
+// DOM elements
 const timerHoursSpan = document.querySelector('.timer-hours');
 const timerMinutesSpan = document.querySelector('.timer-minutes');
 const timerSecondsSpan = document.querySelector('.timer-seconds');
@@ -28,7 +28,6 @@ const eventCancel = document.getElementById('eventCancelBtn');
 const addEventBtn = document.getElementById('addEventBtn');
 const eventsListDiv = document.getElementById('eventsList');
 
-// Help modal (optional)
 const helpBtn = document.getElementById('helpBtn');
 const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
@@ -68,16 +67,15 @@ function updateDisplay() {
     timerSecondsSpan.textContent = parts.secs;
 }
 
-// Determine which event should be active (the one with greatest time ≤ current value for countdown)
+// Determine which event should be active (the greatest time ≤ current)
 function getActiveEvent() {
     if (targetSeconds === 0 || events.length === 0) return null;
-    let current; // seconds left (for countdown) or elapsed (for countup)
+    let current;
     if (mode === "down") {
         current = remainingSeconds;
     } else {
         current = remainingSeconds; // elapsed time (ascending)
     }
-    // For countdown, we want the event with the largest time that is ≤ current
     let candidate = null;
     for (let ev of events) {
         if (ev.timeSeconds <= current) {
@@ -91,10 +89,11 @@ function getActiveEvent() {
 
 function updateTrafficLight() {
     const active = getActiveEvent();
+    // Turn off all lights first
     greenLight.classList.remove('active');
     yellowLight.classList.remove('active');
     redLight.classList.remove('active');
-    if (!active) return; // no active event → all lights off
+    if (!active) return; // No event reached → all lights off
     switch (active.color) {
         case 'green': greenLight.classList.add('active'); break;
         case 'yellow': yellowLight.classList.add('active'); break;
@@ -172,7 +171,7 @@ eventConfirm.addEventListener('click', () => {
 eventCancel.addEventListener('click', closeEventModal);
 eventModal.addEventListener('click', (e) => { if (e.target === eventModal) closeEventModal(); });
 
-// Timer core functions (same as before)
+// Timer core functions
 function flashColor(color) {
     const timerDiv = document.querySelector('.timer');
     const original = timerDiv.style.color;

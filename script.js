@@ -94,11 +94,7 @@ function updateTrafficLight() {
     greenLight.classList.remove('active');
     yellowLight.classList.remove('active');
     redLight.classList.remove('active');
-    if (!active) {
-        // default to green if timer has a target (and no events)
-        if (targetSeconds > 0) greenLight.classList.add('active');
-        return;
-    }
+    if (!active) return; // no active event → all lights off
     switch (active.color) {
         case 'green': greenLight.classList.add('active'); break;
         case 'yellow': yellowLight.classList.add('active'); break;

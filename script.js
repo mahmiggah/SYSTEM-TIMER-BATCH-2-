@@ -44,21 +44,19 @@ const timerDiv = document.querySelector('.timer');
 
 // Timer state
 let intervalId = null;
-let remainingSeconds = 0;      // current value (can be negative for descending)
+let remainingSeconds = 0;
 let targetSeconds = 0;
 let mode = "down";
 let halfTriggered = false;
 let finishNotified = false;
 let zeroCrossed = false;
-let events = [];                // { timeSeconds, color }
+let events = [];
 
 // Preparation state
-let prepTimeSeconds = 0;        // total seconds of preparation
+let prepTimeSeconds = 0;
 let isPreparing = false;
 let originalMainRemaining = 0;
 let originalTarget = 0;
-
-// Continue descending flag
 let continueDescending = false;
 
 // ---------- Load / save preferences ----------
@@ -136,14 +134,12 @@ function formatTime(seconds) {
         secs: secs.toString().padStart(2, '0')
     };
 }
-
 function updateDisplay() {
     const parts = formatTime(remainingSeconds);
     timerHoursSpan.textContent = parts.hrs;
     timerMinutesSpan.textContent = parts.mins;
     timerSecondsSpan.textContent = parts.secs;
 
-    // Text color: default dark; red only when descending negative with continue
     if (mode === "down" && remainingSeconds < 0 && continueDescending) {
         timerDiv.style.color = '#ef4444';
     } else {
@@ -151,41 +147,31 @@ function updateDisplay() {
     }
 }
 
-// ----- Unified event logic (based on time left until finish) -----
+// Traffic light (based on time left)
 function getTimeLeft() {
-    if (mode === "down") {
-        return remainingSeconds;               // time remaining in descending mode
-    } else {
-        return targetSeconds - remainingSeconds; // time left to reach target in ascending mode
-    }
+    if (mode === "down") return remainingSeconds;
+    else return targetSeconds - remainingSeconds;
 }
-
 function getActiveEvent() {
     if (targetSeconds === 0 || events.length === 0) return null;
     const timeLeft = getTimeLeft();
-    if (timeLeft < 0) return null; // already past zero
-
+    if (timeLeft < 0) return null;
     let candidate = null;
     for (let ev of events) {
         if (ev.timeSeconds >= timeLeft) {
-            if (candidate === null || ev.timeSeconds < candidate.timeSeconds) {
-                candidate = ev;
-            }
+            if (candidate === null || ev.timeSeconds < candidate.timeSeconds) candidate = ev;
         }
     }
     return candidate;
 }
-
 function updateTrafficLight() {
     greenLight.classList.remove('active');
     yellowLight.classList.remove('active');
     redLight.classList.remove('active');
-
     if (mode === "down" && remainingSeconds < 0 && continueDescending) {
         redLight.classList.add('active');
         return;
     }
-
     const active = getActiveEvent();
     if (!active) return;
     switch (active.color) {
@@ -195,7 +181,7 @@ function updateTrafficLight() {
     }
 }
 
-// ----- Events management -----
+// Events management
 function renderEventsList() {
     if (!eventsListDiv) return;
     eventsListDiv.innerHTML = '';
@@ -241,13 +227,6 @@ function addEvent(hours, minutes, seconds, color) {
     updateTrafficLight();
     return true;
 }
-function clearAllEvents() {
-    events = [];
-    renderEventsList();
-    updateTrafficLight();
-}
-
-// ----- Event modal handlers -----
 function openEventModal() {
     eventHours.value = 0;
     eventMinutes.value = 0;
@@ -265,7 +244,7 @@ eventConfirm.addEventListener('click', () => {
 eventCancel.addEventListener('click', closeEventModal);
 eventModal.addEventListener('click', (e) => { if (e.target === eventModal) closeEventModal(); });
 
-// ----- Timer core functions (preparation and main) -----
+// Timer core
 function flashColor(color) {
     const original = timerDiv.style.color;
     timerDiv.style.color = color;
@@ -299,10 +278,9 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Main timer tick (no preparation)
+// Main timer tick
 function tick() {
     if (intervalId === null) return;
-
     if (mode === "down") {
         if (remainingSeconds <= 0 && !continueDescending) {
             if (remainingSeconds === 0) {
@@ -358,30 +336,26 @@ function tickPreparation() {
         remainingSeconds = originalMainRemaining;
         targetSeconds = originalTarget;
         updateDisplay();
-        // Automatically start main timer
         if ((mode === "down" && remainingSeconds > 0) || (mode === "up")) {
-            startTimer(); // will start main timer (prep finished)
+            startTimer();
         }
         return;
     }
     remainingSeconds--;
     updateDisplay();
-    // No traffic light updates during preparation
 }
 
 function startTimer() {
     if (intervalId !== null) return;
-    // If in descending mode and time <=0 without continue, cannot start
     if (mode === "down" && remainingSeconds <= 0 && !continueDescending) return;
 
-    // Check if preparation time should be used
     if (prepTimeSeconds > 0 && !isPreparing && !intervalId) {
         isPreparing = true;
         if (prepIndicator) prepIndicator.style.display = 'inline-block';
         originalMainRemaining = remainingSeconds;
         originalTarget = targetSeconds;
         remainingSeconds = prepTimeSeconds;
-        targetSeconds = prepTimeSeconds; // temporary target for prep display
+        targetSeconds = prepTimeSeconds;
         updateDisplay();
         flashColor('#10b981');
         intervalId = setInterval(tickPreparation, 1000);
@@ -389,19 +363,15 @@ function startTimer() {
         return;
     }
 
-    // Normal start (no prep or prep already done)
     flashColor('#10b981');
     intervalId = setInterval(tick, 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
 }
-
 function pauseTimer() {
     if (intervalId === null) return;
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
-    // If in preparation mode, keep remainingSeconds as is (preparation progress not lost)
 }
-
 function toggleStartPause() {
     if (intervalId === null) startTimer();
     else pauseTimer();
@@ -410,7 +380,6 @@ function toggleStartPause() {
 function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
-    // If preparation was active, clear it
     if (isPreparing) {
         isPreparing = false;
         if (prepIndicator) prepIndicator.style.display = 'none';
@@ -430,14 +399,12 @@ function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     updateTrafficLight();
     timerDiv.style.color = '#0f172a';
 }
-
 function setModeFromRadios() {
     const selected = document.querySelector('input[name="countMode"]:checked').value;
     const newMode = selected === "up" ? "up" : "down";
     if (newMode !== mode) {
         mode = newMode;
         if (isPreparing) {
-            // Reset prep state? We'll cancel prep.
             isPreparing = false;
             if (prepIndicator) prepIndicator.style.display = 'none';
             stopTimer();
@@ -453,7 +420,6 @@ function setModeFromRadios() {
         timerDiv.style.color = '#0f172a';
     }
 }
-
 function resetTimer() {
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
@@ -473,7 +439,7 @@ function resetTimer() {
     timerDiv.style.color = '#0f172a';
 }
 
-// ----- Modal handlers -----
+// ---------- Modal handlers ----------
 function openSettingsModal() {
     const radioToCheck = mode === "down" ? document.querySelector('input[value="down"]') : document.querySelector('input[value="up"]');
     if (radioToCheck) radioToCheck.checked = true;
@@ -482,9 +448,7 @@ function openSettingsModal() {
 function closeSettingsModal() { settingsModal.style.display = 'none'; }
 settingsBtn.addEventListener('click', openSettingsModal);
 closeSettingsBtn.addEventListener('click', closeSettingsModal);
-settingsModal.addEventListener('click', (e) => {
-    if (e.target === settingsModal) closeSettingsModal();
-});
+settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettingsModal(); });
 
 setTimeBtn.addEventListener('click', () => {
     closeSettingsModal();
@@ -523,7 +487,7 @@ if (helpBtn && helpModal) {
     helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.style.display = 'none'; });
 }
 
-// ----- Keyboard shortcuts -----
+// ---------- Keyboard shortcuts ----------
 window.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
     switch (e.key) {
@@ -550,7 +514,7 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
-// ----- Initialisation -----
+// ---------- Initialisation ----------
 loadContinuePreference();
 loadPrepTime();
 remainingSeconds = 0;

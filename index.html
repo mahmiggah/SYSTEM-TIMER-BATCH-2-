@@ -11,10 +11,9 @@
 </head>
 <body>
 <div class="app">
-    <!-- Custom editable label (replaces title) -->
+    <!-- Custom editable label -->
     <div id="customLabel" class="custom-label" contenteditable="true">My Timer</div>
-<div id="prepIndicator" class="prep-indicator" style="display: none;">⏳ Preparing...</div>
-    
+
     <!-- Enlarged timer display -->
     <div class="timer">
         <span class="timer-hours">00</span>
@@ -29,6 +28,9 @@
         <span class="unit">SECONDS</span>
     </div>
 
+    <!-- Preparation indicator -->
+    <div id="prepIndicator" class="prep-indicator" style="display: none;">⏳ Preparing...</div>
+
     <!-- Traffic light -->
     <div class="traffic-light">
         <div class="light green active"></div>
@@ -36,7 +38,7 @@
         <div class="light red"></div>
     </div>
 
-    <!-- Three main buttons -->
+    <!-- Main controls -->
     <div class="controls">
         <button id="startPauseBtn">▶ Start</button>
         <button id="resetBtn">🔄 Reset</button>
@@ -63,13 +65,13 @@
                 <label><input type="checkbox" id="continueDescending"> Continue descending past zero</label>
             </div>
             <div class="prep-time-group">
-    <label>⏰ Preparation time (before main timer):</label>
-    <div class="prep-inputs">
-        <div class="input-unit"><input type="number" id="prepHours" min="0" max="99" value="0" step="1"><span>hours</span></div>
-        <div class="input-unit"><input type="number" id="prepMinutes" min="0" max="59" value="0" step="1"><span>minutes</span></div>
-        <div class="input-unit"><input type="number" id="prepSeconds" min="0" max="59" value="0" step="1"><span>seconds</span></div>
-    </div>
-</div>
+                <label>⏰ Preparation time (before main timer):</label>
+                <div class="prep-inputs">
+                    <div class="input-unit"><input type="number" id="prepHours" min="0" max="99" value="0" step="1"><span>hours</span></div>
+                    <div class="input-unit"><input type="number" id="prepMinutes" min="0" max="59" value="0" step="1"><span>minutes</span></div>
+                    <div class="input-unit"><input type="number" id="prepSeconds" min="0" max="59" value="0" step="1"><span>seconds</span></div>
+                </div>
+            </div>
         </div>
         <div class="events-header">
             <hr>
@@ -117,15 +119,15 @@
     </div>
 </div>
 
-<!-- Help Modal (optional) -->
+<!-- Help Modal -->
 <div id="helpModal" class="modal">
     <div class="modal-content" style="max-width: 500px; text-align: left;">
         <h3 style="text-align: center;">📘 Timer Guide</h3>
         <div style="margin-top: 1rem;">
-            <p><strong>▶ Start / ⏸</strong> – starts/pauses the timer.</p>
-            <p><strong>🔄 Reset</strong> – resets to last set duration.</p>
-            <p><strong>⚙️ Settings</strong> – set time, toggle mode, continue descending, and manage traffic light events.</p>
-            <p><strong>🚦 Events</strong> – add times (in seconds) when the traffic light changes color.</p>
+            <p><strong>▶ Start / ⏸</strong> – starts/pauses the timer. If preparation time is set, it runs first.</p>
+            <p><strong>🔄 Reset</strong> – resets to last set duration (cancels preparation).</p>
+            <p><strong>⚙️ Settings</strong> – set time, toggle mode, enable continue past zero, set preparation time, and manage traffic light events.</p>
+            <p><strong>🚦 Events</strong> – add times (in seconds) when the traffic light changes colour.</p>
             <p><strong>✏️ Custom Label</strong> – click the top text to rename your timer.</p>
             <p><strong>⌨️ Hotkeys</strong> – <kbd>Space</kbd> Start/Pause, <kbd>R</kbd> Reset, <kbd>S</kbd> Settings, <kbd>E</kbd> Add Event.</p>
         </div>

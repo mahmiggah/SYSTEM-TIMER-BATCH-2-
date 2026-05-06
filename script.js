@@ -39,7 +39,7 @@ let mode = "down";
 let halfTriggered = false;
 let finishNotified = false;
 
-// Thresholds (default values)
+// Thresholds (defaults)
 let yellowThreshold = 10;
 let redThreshold = 3;
 
@@ -57,7 +57,7 @@ function saveThresholds() {
     localStorage.setItem('redThreshold', redThreshold);
 }
 
-// Helper: format time
+// Helper format
 function formatTime(seconds) {
     const absSecs = Math.abs(seconds);
     const hrs = Math.floor(absSecs / 3600);
@@ -85,14 +85,13 @@ function updateTrafficLight() {
     }
     let currentValue;
     if (mode === "down") {
-        currentValue = remainingSeconds; // seconds left
+        currentValue = remainingSeconds;
     } else {
-        // For ascending, we use elapsed seconds = remainingSeconds (since we start at 0)
-        // but we need to compare with thresholds (seconds left to target? better use remaining to target)
-        const remainingToTarget = targetSeconds - remainingSeconds;
-        currentValue = remainingToTarget;
+        // ascending: we consider the remaining time to target
+        currentValue = targetSeconds - remainingSeconds;
+        if (currentValue < 0) currentValue = 0;
     }
-    if (currentValue <= redThreshold) {
+    if (currentValue <= redThreshold && currentValue >= 0) {
         greenLight.classList.remove('active');
         yellowLight.classList.remove('active');
         redLight.classList.add('active');
@@ -266,13 +265,15 @@ modalConfirm.addEventListener('click', () => {
 modalCancel.addEventListener('click', closeTimeModal);
 timeModal.addEventListener('click', (e) => { if (e.target === timeModal) closeTimeModal(); });
 
-// Threshold event listeners
-if (yellowInput && redInput) {
+// Threshold change listeners
+if (yellowInput) {
     yellowInput.addEventListener('change', () => {
         yellowThreshold = parseInt(yellowInput.value) || 0;
         saveThresholds();
         updateTrafficLight();
     });
+}
+if (redInput) {
     redInput.addEventListener('change', () => {
         redThreshold = parseInt(redInput.value) || 0;
         saveThresholds();
@@ -281,9 +282,7 @@ if (yellowInput && redInput) {
 }
 
 modeRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-        setModeFromRadios();
-    });
+    radio.addEventListener('change', () => { setModeFromRadios(); });
 });
 
 resetBtn.addEventListener('click', resetTimer);

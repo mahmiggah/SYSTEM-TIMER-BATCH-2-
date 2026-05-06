@@ -13,7 +13,8 @@
 <div class="app">
     <!-- Custom editable label (replaces title) -->
     <div id="customLabel" class="custom-label" contenteditable="true">My Timer</div>
-
+<div id="prepIndicator" class="prep-indicator" style="display: none;">⏳ Preparing...</div>
+    
     <!-- Enlarged timer display -->
     <div class="timer">
         <span class="timer-hours">00</span>
@@ -61,6 +62,14 @@
             <div class="continue-option">
                 <label><input type="checkbox" id="continueDescending"> Continue descending past zero</label>
             </div>
+            <div class="prep-time-group">
+    <label>⏰ Preparation time (before main timer):</label>
+    <div class="prep-inputs">
+        <div class="input-unit"><input type="number" id="prepHours" min="0" max="99" value="0" step="1"><span>hours</span></div>
+        <div class="input-unit"><input type="number" id="prepMinutes" min="0" max="59" value="0" step="1"><span>minutes</span></div>
+        <div class="input-unit"><input type="number" id="prepSeconds" min="0" max="59" value="0" step="1"><span>seconds</span></div>
+    </div>
+</div>
         </div>
         <div class="events-header">
             <hr>

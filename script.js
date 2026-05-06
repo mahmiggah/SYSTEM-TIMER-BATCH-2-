@@ -46,14 +46,16 @@ let remainingSeconds = 0;
 let targetSeconds = 0;
 let mode = "down";
 let halfTriggered = false;
-let finishNotified = false;      // for ascending
-let zeroCrossed = false;         // for descending continue
+let finishNotified = false;
+let zeroCrossed = false;
 
-// Events array: each { timeSeconds, color }
+// Events array
 let events = [];
 
-// Load continue preference
+// Continue descending flag
 let continueDescending = false;
+
+// Load continue preference
 function loadContinuePreference() {
     const saved = localStorage.getItem('continueDescending');
     if (saved !== null) continueDescending = (saved === 'true');
@@ -82,20 +84,39 @@ function formatTime(seconds) {
         secs: secs.toString().padStart(2, '0')
     };
 }
+
+const timerDiv = document.querySelector('.timer');
+
+function setTimerTextColor(color, permanently = false) {
+    if (permanently) {
+        timerDiv.style.color = color;
+    } else {
+        const original = timerDiv.style.color;
+        timerDiv.style.color = color;
+        setTimeout(() => {
+            if (timerDiv.style.color === color) {
+                timerDiv.style.color = original || '';
+            }
+        }, 500);
+    }
+}
+
 function updateDisplay() {
     const parts = formatTime(remainingSeconds);
     timerHoursSpan.textContent = parts.hrs;
     timerMinutesSpan.textContent = parts.mins;
     timerSecondsSpan.textContent = parts.secs;
+
+    // If in descending continue past zero and negative, keep red permanently
+    if (mode === "down" && remainingSeconds < 0 && continueDescending) {
+        timerDiv.style.color = '#ef4444';
+    }
 }
 
-/* ----- TRAFFIC LIGHT EVENT LOGIC (FIXED) ----- */
+// Traffic light event logic
 function getActiveEvent() {
     if (targetSeconds === 0 || events.length === 0) return null;
-
     if (mode === "down") {
-        // Descending: active event is the smallest event time >= current remaining seconds
-        // (i.e., the next upcoming event)
         let candidate = null;
         for (let ev of events) {
             if (ev.timeSeconds >= remainingSeconds) {
@@ -104,10 +125,8 @@ function getActiveEvent() {
                 }
             }
         }
-        // If no event is above or equal, no active event (lights off)
         return candidate;
     } else {
-        // Ascending: active event is the largest event time <= current elapsed seconds
         let candidate = null;
         for (let ev of events) {
             if (ev.timeSeconds <= remainingSeconds) {
@@ -121,27 +140,44 @@ function getActiveEvent() {
 }
 
 function updateTrafficLight() {
-    // First turn all off
     greenLight.classList.remove('active');
     yellowLight.classList.remove('active');
     redLight.classList.remove('active');
 
-    // Special case: descending mode and timer is negative → red light on
+    // Negative descending case: red light ON and timer text stays red (already handled in updateDisplay)
     if (mode === "down" && remainingSeconds < 0 && continueDescending) {
         redLight.classList.add('active');
+        timerDiv.style.color = '#ef4444';
         return;
     }
 
     const active = getActiveEvent();
-    if (!active) return;
+    if (!active) {
+        // No active event: revert timer text to default if not negative
+        if (!(mode === "down" && remainingSeconds < 0 && continueDescending)) {
+            timerDiv.style.color = '#0f172a';
+        }
+        return;
+    }
+
+    let colorClass = '';
+    let rgb = '';
     switch (active.color) {
-        case 'green': greenLight.classList.add('active'); break;
-        case 'yellow': yellowLight.classList.add('active'); break;
-        case 'red': redLight.classList.add('active'); break;
+        case 'green': colorClass = 'active'; rgb = '#10b981'; break;
+        case 'yellow': colorClass = 'active'; rgb = '#eab308'; break;
+        case 'red': colorClass = 'active'; rgb = '#ef4444'; break;
+        default: return;
+    }
+    if (colorClass === 'active') {
+        if (active.color === 'green') greenLight.classList.add('active');
+        else if (active.color === 'yellow') yellowLight.classList.add('active');
+        else if (active.color === 'red') redLight.classList.add('active');
+        // Flash the timer text to the event color (temporary)
+        setTimerTextColor(rgb, false);
     }
 }
 
-// Events management (add, remove, render)
+// Events management
 function renderEventsList() {
     if (!eventsListDiv) return;
     eventsListDiv.innerHTML = '';
@@ -193,7 +229,6 @@ function clearAllEvents() {
     updateTrafficLight();
 }
 
-// Event modal handlers
 function openEventModal() {
     eventHours.value = 0;
     eventMinutes.value = 0;
@@ -211,12 +246,11 @@ eventConfirm.addEventListener('click', () => {
 eventCancel.addEventListener('click', closeEventModal);
 eventModal.addEventListener('click', (e) => { if (e.target === eventModal) closeEventModal(); });
 
-// Timer core functions
+// Timer core
 function flashColor(color) {
-    const timerDiv = document.querySelector('.timer');
     const original = timerDiv.style.color;
     timerDiv.style.color = color;
-    setTimeout(() => timerDiv.style.color = original, 400);
+    setTimeout(() => { if (timerDiv.style.color === color) timerDiv.style.color = original; }, 400);
 }
 function stopTimer() {
     if (intervalId !== null) {
@@ -251,7 +285,6 @@ function tick() {
 
     if (mode === "down") {
         if (remainingSeconds <= 0 && !continueDescending) {
-            // Stop at zero if not continuing
             if (remainingSeconds === 0) {
                 stopTimer();
                 startPauseBtn.innerHTML = '▶ Start';
@@ -266,21 +299,18 @@ function tick() {
             }
             return;
         }
-        // Decrement
         remainingSeconds--;
-        // Check zero crossing (first time only)
         if (!zeroCrossed && remainingSeconds < 0) {
             zeroCrossed = true;
             playBeep(880, 1);
             showToast('⏰ Time\'s up! (continuing)');
             flashColor('#dc2626');
         }
-        // Halfway flash (only while positive)
         if (!halfTriggered && targetSeconds > 0 && remainingSeconds <= targetSeconds / 2 && remainingSeconds >= 0) {
             halfTriggered = true;
             flashColor('#eab308');
         }
-    } else { // ascending
+    } else {
         remainingSeconds++;
         if (!finishNotified && remainingSeconds >= targetSeconds && targetSeconds > 0) {
             finishNotified = true;
@@ -329,6 +359,7 @@ function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     zeroCrossed = false;
     updateDisplay();
     updateTrafficLight();
+    timerDiv.style.color = '#0f172a';
 }
 function setModeFromRadios() {
     const selected = document.querySelector('input[name="countMode"]:checked').value;
@@ -342,6 +373,7 @@ function setModeFromRadios() {
         zeroCrossed = false;
         updateDisplay();
         updateTrafficLight();
+        timerDiv.style.color = '#0f172a';
     }
 }
 function resetTimer() {
@@ -354,6 +386,7 @@ function resetTimer() {
     zeroCrossed = false;
     updateDisplay();
     updateTrafficLight();
+    timerDiv.style.color = '#0f172a';
 }
 
 // Modal handlers
@@ -365,9 +398,7 @@ function openSettingsModal() {
 function closeSettingsModal() { settingsModal.style.display = 'none'; }
 settingsBtn.addEventListener('click', openSettingsModal);
 closeSettingsBtn.addEventListener('click', closeSettingsModal);
-settingsModal.addEventListener('click', (e) => {
-    if (e.target === settingsModal) closeSettingsModal();
-});
+settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettingsModal(); });
 
 setTimeBtn.addEventListener('click', () => {
     closeSettingsModal();
@@ -412,3 +443,4 @@ remainingSeconds = 0;
 targetSeconds = 0;
 updateDisplay();
 updateTrafficLight();
+timerDiv.style.color = '#0f172a';

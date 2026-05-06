@@ -470,7 +470,6 @@ modalConfirm.addEventListener('click', () => {
     closeTimeModal();
     openSettingsModal();
 });
-// FIX: Cancel button now reopens settings modal
 modalCancel.addEventListener('click', () => {
     closeTimeModal();
     openSettingsModal();

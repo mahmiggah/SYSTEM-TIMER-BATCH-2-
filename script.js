@@ -22,42 +22,33 @@ const helpBtn = document.getElementById('helpBtn');
 const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
 
+// Event modal
+const eventModal = document.getElementById('eventModal');
+const eventHours = document.getElementById('eventHours');
+const eventMinutes = document.getElementById('eventMinutes');
+const eventSeconds = document.getElementById('eventSeconds');
+const eventConfirm = document.getElementById('eventConfirmBtn');
+const eventCancel = document.getElementById('eventCancelBtn');
+const addEventBtn = document.getElementById('addEventBtn');
+const eventsListDiv = document.getElementById('eventsList');
+
 // Traffic lights
 const greenLight = document.querySelector('.light.green');
 const yellowLight = document.querySelector('.light.yellow');
 const redLight = document.querySelector('.light.red');
 
-// Threshold inputs
-const yellowInput = document.getElementById('yellowThreshold');
-const redInput = document.getElementById('redThreshold');
-
 // Timer state
 let intervalId = null;
 let remainingSeconds = 0;
 let targetSeconds = 0;
-let mode = "down";             // "down" or "up"
+let mode = "down";
 let halfTriggered = false;
-let finishNotified = false;    // for ascending (toast once)
+let finishNotified = false;
 
-// Default thresholds (seconds left to trigger yellow / red)
-let yellowThreshold = 10;
-let redThreshold = 3;
+// Traffic light events – each: { timeSeconds, color }
+let events = [];
 
-// ---------- Load / save thresholds ----------
-function loadThresholds() {
-    const savedYellow = localStorage.getItem('yellowThreshold');
-    const savedRed = localStorage.getItem('redThreshold');
-    if (savedYellow !== null) yellowThreshold = parseInt(savedYellow);
-    if (savedRed !== null) redThreshold = parseInt(savedRed);
-    if (yellowInput) yellowInput.value = yellowThreshold;
-    if (redInput) redInput.value = redThreshold;
-}
-function saveThresholds() {
-    localStorage.setItem('yellowThreshold', yellowThreshold);
-    localStorage.setItem('redThreshold', redThreshold);
-}
-
-// ---------- Helper functions ----------
+// Helper: format time
 function formatTime(seconds) {
     const absSecs = Math.abs(seconds);
     const hrs = Math.floor(absSecs / 3600);
@@ -76,48 +67,116 @@ function updateDisplay() {
     timerSecondsSpan.textContent = parts.secs;
 }
 
-function updateTrafficLight() {
-    if (targetSeconds === 0) {
-        greenLight.classList.remove('active');
-        yellowLight.classList.remove('active');
-        redLight.classList.remove('active');
-        return;
-    }
-
+// Determine which event is active based on current remaining/time elapsed
+function getActiveEvent() {
+    if (targetSeconds === 0 || events.length === 0) return null;
     if (mode === "down") {
-        const remaining = remainingSeconds;
-        if (remaining <= redThreshold && remaining >= 0) {
-            greenLight.classList.remove('active');
-            yellowLight.classList.remove('active');
-            redLight.classList.add('active');
-        } else if (remaining <= yellowThreshold) {
-            greenLight.classList.remove('active');
-            yellowLight.classList.add('active');
-            redLight.classList.remove('active');
-        } else {
-            greenLight.classList.add('active');
-            yellowLight.classList.remove('active');
-            redLight.classList.remove('active');
-        }
+        // Countdown: events with time >= remainingSeconds (closest to current)
+        const upcoming = events.filter(e => e.timeSeconds >= remainingSeconds);
+        if (upcoming.length === 0) return null;
+        // smallest time among upcoming (the first to be reached)
+        upcoming.sort((a,b) => a.timeSeconds - b.timeSeconds);
+        return upcoming[0];
     } else {
-        // Ascending: use the remaining time to reach target
-        const remainingToTarget = targetSeconds - remainingSeconds;
-        if (remainingToTarget <= redThreshold && remainingSeconds <= targetSeconds) {
-            greenLight.classList.remove('active');
-            yellowLight.classList.remove('active');
-            redLight.classList.add('active');
-        } else if (remainingToTarget <= yellowThreshold) {
-            greenLight.classList.remove('active');
-            yellowLight.classList.add('active');
-            redLight.classList.remove('active');
-        } else {
-            greenLight.classList.add('active');
-            yellowLight.classList.remove('active');
-            redLight.classList.remove('active');
-        }
+        // Countup: events with time <= remainingSeconds (already passed)
+        const passed = events.filter(e => e.timeSeconds <= remainingSeconds);
+        if (passed.length === 0) return null;
+        // largest time among passed (most recent)
+        passed.sort((a,b) => b.timeSeconds - a.timeSeconds);
+        return passed[0];
     }
 }
 
+function updateTrafficLight() {
+    const active = getActiveEvent();
+    // Reset all lights first
+    greenLight.classList.remove('active');
+    yellowLight.classList.remove('active');
+    redLight.classList.remove('active');
+    if (!active) {
+        // Default: green if time not zero, else all off
+        if (targetSeconds > 0) greenLight.classList.add('active');
+        return;
+    }
+    switch (active.color) {
+        case 'green': greenLight.classList.add('active'); break;
+        case 'yellow': yellowLight.classList.add('active'); break;
+        case 'red': redLight.classList.add('active'); break;
+    }
+}
+
+// Event management
+function renderEventsList() {
+    if (!eventsListDiv) return;
+    eventsListDiv.innerHTML = '';
+    events.sort((a,b) => a.timeSeconds - b.timeSeconds);
+    events.forEach((ev, idx) => {
+        const t = formatTime(ev.timeSeconds);
+        const timeStr = (t.hrs !== '00' ? `${t.hrs}:` : '') + `${t.mins}:${t.secs}`;
+        const div = document.createElement('div');
+        div.className = 'event-item';
+        div.innerHTML = `
+            <div>
+                <span class="color-badge ${ev.color}"></span>
+                <span class="time">${timeStr}</span>
+            </div>
+            <button data-index="${idx}">✖</button>
+        `;
+        div.querySelector('button').addEventListener('click', () => {
+            events.splice(idx, 1);
+            renderEventsList();
+            updateTrafficLight();
+        });
+        eventsListDiv.appendChild(div);
+    });
+}
+function addEvent(hours, minutes, seconds, color) {
+    let h = parseInt(hours) || 0;
+    let m = parseInt(minutes) || 0;
+    let s = parseInt(seconds) || 0;
+    if (s > 59) s = 59;
+    const totalSec = h * 3600 + m * 60 + s;
+    if (totalSec === 0) return;
+    if (targetSeconds === 0) {
+        alert('Please set a timer time first.');
+        return false;
+    }
+    if (totalSec > targetSeconds) {
+        alert('Event time cannot exceed timer duration.');
+        return false;
+    }
+    // prevent duplicate time? allow, but not necessary.
+    events.push({ timeSeconds: totalSec, color: color });
+    events.sort((a,b) => a.timeSeconds - b.timeSeconds);
+    renderEventsList();
+    updateTrafficLight();
+    return true;
+}
+function clearAllEvents() {
+    events = [];
+    renderEventsList();
+    updateTrafficLight();
+}
+
+// Event modal handlers
+function openEventModal() {
+    eventHours.value = 0;
+    eventMinutes.value = 0;
+    eventSeconds.value = 0;
+    eventModal.style.display = 'flex';
+    eventHours.focus();
+}
+function closeEventModal() { eventModal.style.display = 'none'; }
+if (addEventBtn) addEventBtn.addEventListener('click', openEventModal);
+eventConfirm.addEventListener('click', () => {
+    const selectedColor = document.querySelector('input[name="eventColor"]:checked').value;
+    addEvent(eventHours.value, eventMinutes.value, eventSeconds.value, selectedColor);
+    closeEventModal();
+});
+eventCancel.addEventListener('click', closeEventModal);
+eventModal.addEventListener('click', (e) => { if (e.target === eventModal) closeEventModal(); });
+
+// Rest of timer functions (tick, start, pause, etc.)
 function flashColor(color) {
     const timerDiv = document.querySelector('.timer');
     const original = timerDiv.style.color;
@@ -152,10 +211,8 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// ---------- Timer core ----------
 function tick() {
     if (intervalId === null) return;
-
     if (mode === "down") {
         if (remainingSeconds <= 0) return;
         remainingSeconds--;
@@ -173,7 +230,7 @@ function tick() {
             halfTriggered = true;
             flashColor('#eab308');
         }
-    } else { // ascending
+    } else {
         remainingSeconds++;
         if (!finishNotified && remainingSeconds >= targetSeconds && targetSeconds > 0) {
             finishNotified = true;
@@ -189,12 +246,11 @@ function tick() {
     updateDisplay();
     updateTrafficLight();
 }
-
 function startTimer() {
     if (intervalId !== null) return;
     if (mode === "down" && remainingSeconds <= 0) return;
     flashColor('#10b981');
-    intervalId = setInterval(() => tick(), 1000);
+    intervalId = setInterval(tick, 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
 }
 function pauseTimer() {
@@ -246,7 +302,7 @@ function resetTimer() {
     updateTrafficLight();
 }
 
-// ---------- Modal handlers ----------
+// Modal handlers (Set Time, Settings)
 function openSettingsModal() {
     const radioToCheck = mode === "down" ? document.querySelector('input[value="down"]') : document.querySelector('input[value="up"]');
     if (radioToCheck) radioToCheck.checked = true;
@@ -275,31 +331,14 @@ function closeTimeModal() { timeModal.style.display = 'none'; }
 modalConfirm.addEventListener('click', () => {
     setTimerFromHoursMinutesSeconds(modalHours.value, modalMinutes.value, modalSeconds.value);
     closeTimeModal();
-    openSettingsModal(); // return to settings modal
+    openSettingsModal();
 });
 modalCancel.addEventListener('click', closeTimeModal);
 timeModal.addEventListener('click', (e) => { if (e.target === timeModal) closeTimeModal(); });
 
-// Threshold listeners
-if (yellowInput && redInput) {
-    yellowInput.addEventListener('change', () => {
-        yellowThreshold = parseInt(yellowInput.value) || 0;
-        saveThresholds();
-        updateTrafficLight();
-    });
-    redInput.addEventListener('change', () => {
-        redThreshold = parseInt(redInput.value) || 0;
-        saveThresholds();
-        updateTrafficLight();
-    });
-}
-
 modeRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-        setModeFromRadios();
-    });
+    radio.addEventListener('change', () => { setModeFromRadios(); });
 });
-
 resetBtn.addEventListener('click', resetTimer);
 startPauseBtn.addEventListener('click', toggleStartPause);
 
@@ -311,7 +350,6 @@ if (helpBtn && helpModal) {
 }
 
 // Initial
-loadThresholds();
 remainingSeconds = 0;
 targetSeconds = 0;
 updateDisplay();

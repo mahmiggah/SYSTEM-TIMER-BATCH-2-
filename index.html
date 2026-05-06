@@ -50,6 +50,13 @@
                 <label><input type="radio" name="countMode" value="down" checked> Descending</label>
                 <label><input type="radio" name="countMode" value="up"> Ascending</label>
             </div>
+            <div class="events-header">
+    <hr>
+    <h4>🚦 Traffic Light Events</h4>
+    <button id="addEventBtn" class="small-btn">+ Add Event</button>
+</div>
+<div id="eventsList" class="events-list"></div>
+            
             <div class="thresholds">
     <label>🟡 Yellow when ≤ <input type="number" id="yellowThreshold" value="10" step="1" min="0"> seconds left</label>
     <label>🔴 Red when ≤ <input type="number" id="redThreshold" value="3" step="1" min="0"> seconds left</label>
@@ -87,6 +94,27 @@
         </div>
         <div class="modal-buttons" style="margin-top: 1.5rem;">
             <button id="closeHelpBtn" style="background:#0f172a; color:white;">Got it</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add / Edit Traffic Light Event Modal -->
+<div id="eventModal" class="modal">
+    <div class="modal-content">
+        <h3>Add Traffic Light Event</h3>
+        <div class="time-input-group">
+            <div class="input-unit"><input type="number" id="eventHours" min="0" value="0" step="1"><span>hours</span></div>
+            <div class="input-unit"><input type="number" id="eventMinutes" min="0" value="0" step="1"><span>minutes</span></div>
+            <div class="input-unit"><input type="number" id="eventSeconds" min="0" max="59" value="0" step="1"><span>seconds</span></div>
+        </div>
+        <div style="margin: 1rem 0;">
+            <label style="margin-right: 1rem;"><input type="radio" name="eventColor" value="green" checked> 🟢 Green</label>
+            <label style="margin-right: 1rem;"><input type="radio" name="eventColor" value="yellow"> 🟡 Yellow</label>
+            <label><input type="radio" name="eventColor" value="red"> 🔴 Red</label>
+        </div>
+        <div class="modal-buttons">
+            <button id="eventConfirmBtn">Add Event</button>
+            <button id="eventCancelBtn">Cancel</button>
         </div>
     </div>
 </div>

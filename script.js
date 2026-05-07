@@ -4,7 +4,8 @@ const timerMinutesSpan = document.querySelector('.timer-minutes');
 const timerSecondsSpan = document.querySelector('.timer-seconds');
 const startPauseBtn = document.getElementById('startPauseBtn');
 const resetBtn = document.getElementById('resetBtn');
-const settingsBtn = document.getElementById('settingsBtn');
+const menuBtn = document.getElementById('menuBtn');
+const helpBtn = document.getElementById('helpBtn');
 
 const settingsModal = document.getElementById('settingsModal');
 const closeSettingsBtn = document.getElementById('closeSettingsBtn');
@@ -27,7 +28,6 @@ const eventCancel = document.getElementById('eventCancelBtn');
 const addEventBtn = document.getElementById('addEventBtn');
 const eventsListDiv = document.getElementById('eventsList');
 
-const helpBtn = document.getElementById('helpBtn');
 const helpModal = document.getElementById('helpModal');
 const closeHelpBtn = document.getElementById('closeHelpBtn');
 
@@ -58,6 +58,9 @@ let isPreparing = false;
 let originalMainRemaining = 0;
 let originalTarget = 0;
 let continueDescending = false;
+
+// Custom label input in settings
+const customLabelInput = document.getElementById('customLabelInput');
 
 // ---------- Load / save preferences ----------
 function loadContinuePreference() {
@@ -106,18 +109,11 @@ if (prepHoursInput && prepMinutesInput && prepSecondsInput) {
 }
 
 // Custom label persistence
-const customLabel = document.getElementById('customLabel');
-if (customLabel) {
+if (customLabelInput) {
     const savedLabel = localStorage.getItem('timerCustomLabel');
-    if (savedLabel) customLabel.textContent = savedLabel;
-    customLabel.addEventListener('blur', () => {
-        localStorage.setItem('timerCustomLabel', customLabel.textContent);
-    });
-    customLabel.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            customLabel.blur();
-        }
+    if (savedLabel) customLabelInput.value = savedLabel;
+    customLabelInput.addEventListener('change', () => {
+        localStorage.setItem('timerCustomLabel', customLabelInput.value);
     });
 }
 
@@ -147,41 +143,48 @@ function updateDisplay() {
     }
 }
 
-// Traffic light (based on time left)
-function getTimeLeft() {
-    if (mode === "down") return remainingSeconds;
-    else return targetSeconds - remainingSeconds;
-}
-function getActiveEvent() {
-    if (targetSeconds === 0 || events.length === 0) return null;
-    const timeLeft = getTimeLeft();
-    if (timeLeft < 0) return null;
-    let candidate = null;
-    for (let ev of events) {
-        if (ev.timeSeconds >= timeLeft) {
-            if (candidate === null || ev.timeSeconds < candidate.timeSeconds) candidate = ev;
-        }
-    }
-    return candidate;
-}
+// ---------- Traffic light using threshold logic ----------
 function updateTrafficLight() {
+    // Turn off all
     greenLight.classList.remove('active');
     yellowLight.classList.remove('active');
     redLight.classList.remove('active');
+
     if (mode === "down" && remainingSeconds < 0 && continueDescending) {
         redLight.classList.add('active');
         return;
     }
-    const active = getActiveEvent();
-    if (!active) return;
-    switch (active.color) {
-        case 'green': greenLight.classList.add('active'); break;
-        case 'yellow': yellowLight.classList.add('active'); break;
-        case 'red': redLight.classList.add('active'); break;
+
+    // Determine time left (same for both modes)
+    let timeLeft;
+    if (mode === "down") {
+        timeLeft = remainingSeconds;
+    } else {
+        timeLeft = targetSeconds - remainingSeconds;
+    }
+    if (timeLeft < 0) timeLeft = 0;
+
+    // Sort events descending by time (largest first)
+    const sorted = [...events].sort((a,b) => b.timeSeconds - a.timeSeconds);
+    // Find the first event where timeLeft <= event.timeSeconds
+    let activeEvent = null;
+    for (let ev of sorted) {
+        if (timeLeft <= ev.timeSeconds) {
+            activeEvent = ev;
+        } else {
+            break;
+        }
+    }
+    if (activeEvent) {
+        switch (activeEvent.color) {
+            case 'green': greenLight.classList.add('active'); break;
+            case 'yellow': yellowLight.classList.add('active'); break;
+            case 'red': redLight.classList.add('active'); break;
+        }
     }
 }
 
-// Events management
+// Events management (unchanged)
 function renderEventsList() {
     if (!eventsListDiv) return;
     eventsListDiv.innerHTML = '';
@@ -244,7 +247,7 @@ eventConfirm.addEventListener('click', () => {
 eventCancel.addEventListener('click', closeEventModal);
 eventModal.addEventListener('click', (e) => { if (e.target === eventModal) closeEventModal(); });
 
-// Timer core
+// Timer core functions (same as before, but now using updateTrafficLight)
 function flashColor(color) {
     const original = timerDiv.style.color;
     timerDiv.style.color = color;
@@ -345,8 +348,6 @@ function tickPreparation() {
     remainingSeconds--;
     updateDisplay();
 }
-
-// Start main timer without any preparation logic
 function startMainTimer() {
     if (intervalId !== null) return;
     if (mode === "down" && remainingSeconds <= 0 && !continueDescending) return;
@@ -354,8 +355,6 @@ function startMainTimer() {
     intervalId = setInterval(tick, 1000);
     startPauseBtn.innerHTML = '⏸ Pause';
 }
-
-// Main start timer (handles preparation)
 function startTimer() {
     if (intervalId !== null) return;
     if (mode === "down" && remainingSeconds <= 0 && !continueDescending) return;
@@ -373,10 +372,8 @@ function startTimer() {
         startPauseBtn.innerHTML = '⏸ Pause';
         return;
     }
-
     startMainTimer();
 }
-
 function pauseTimer() {
     if (intervalId === null) return;
     stopTimer();
@@ -449,14 +446,14 @@ function resetTimer() {
     timerDiv.style.color = '#0f172a';
 }
 
-// ---------- Modal handlers ----------
+// Modal handlers
 function openSettingsModal() {
     const radioToCheck = mode === "down" ? document.querySelector('input[value="down"]') : document.querySelector('input[value="up"]');
     if (radioToCheck) radioToCheck.checked = true;
     settingsModal.style.display = 'flex';
 }
 function closeSettingsModal() { settingsModal.style.display = 'none'; }
-settingsBtn.addEventListener('click', openSettingsModal);
+menuBtn.addEventListener('click', openSettingsModal);
 closeSettingsBtn.addEventListener('click', closeSettingsModal);
 settingsModal.addEventListener('click', (e) => {
     if (e.target === settingsModal) closeSettingsModal();
@@ -502,7 +499,7 @@ if (helpBtn && helpModal) {
     helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.style.display = 'none'; });
 }
 
-// ---------- Keyboard shortcuts ----------
+// Keyboard shortcuts
 window.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
     switch (e.key) {
@@ -529,7 +526,7 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
-// ---------- Initialisation ----------
+// Initialisation
 loadContinuePreference();
 loadPrepTime();
 remainingSeconds = 0;

@@ -33,6 +33,7 @@ const closeHelpBtn = document.getElementById('closeHelpBtn');
 
 const continueDescendingCheckbox = document.getElementById('continueDescending');
 const prepIndicator = document.getElementById('prepIndicator');
+const prepTimerDisplay = document.getElementById('prepTimerDisplay');
 const prepHoursInput = document.getElementById('prepHours');
 const prepMinutesInput = document.getElementById('prepMinutes');
 const prepSecondsInput = document.getElementById('prepSeconds');
@@ -57,7 +58,8 @@ let zeroCrossed = false;
 let events = [];
 
 // Preparation state
-let prepTimeSeconds = 0;
+let prepTimeSeconds = 0;        // total preparation duration
+let currentPrepSeconds = 0;     // remaining preparation seconds
 let isPreparing = false;
 let originalMainRemaining = 0;
 let originalTarget = 0;
@@ -151,6 +153,17 @@ function updateDisplay() {
     } else {
         timerDiv.style.color = '#0f172a';
     }
+}
+
+// Preparation display update
+function updatePrepDisplay(seconds) {
+    if (!prepTimerDisplay) return;
+    const absSecs = Math.abs(seconds);
+    const hrs = Math.floor(absSecs / 3600);
+    const mins = Math.floor((absSecs % 3600) / 60);
+    const secs = absSecs % 60;
+    const timeStr = `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+    prepTimerDisplay.textContent = `⏳ Prep: ${timeStr}`;
 }
 
 // ---------- Traffic light (threshold logic) ----------
@@ -333,24 +346,29 @@ function tick() {
     updateDisplay();
     updateTrafficLight();
 }
+
+// Preparation tick (separate display)
 function tickPreparation() {
     if (intervalId === null) return;
-    if (remainingSeconds <= 0) {
+    if (currentPrepSeconds <= 0) {
+        // Preparation finished
         stopTimer();
         startPauseBtn.innerHTML = '▶ Start';
         isPreparing = false;
+        if (prepTimerDisplay) prepTimerDisplay.style.display = 'none';
         if (prepIndicator) prepIndicator.style.display = 'none';
+        // Restore main timer values (they were never changed)
         remainingSeconds = originalMainRemaining;
         targetSeconds = originalTarget;
         updateDisplay();
-        if ((mode === "down" && remainingSeconds > 0) || (mode === "up")) {
-            startMainTimer();
-        }
+        // Start main timer automatically
+        startMainTimer();
         return;
     }
-    remainingSeconds--;
-    updateDisplay();
+    currentPrepSeconds--;
+    updatePrepDisplay(currentPrepSeconds);
 }
+
 function startMainTimer() {
     if (intervalId !== null) return;
     if (mode === "down" && remainingSeconds <= 0 && !continueDescending) return;
@@ -364,11 +382,17 @@ function startTimer() {
 
     if (prepTimeSeconds > 0 && !isPreparing && !intervalId) {
         isPreparing = true;
-        if (prepIndicator) prepIndicator.style.display = 'inline-block';
+        // Store original main values
         originalMainRemaining = remainingSeconds;
         originalTarget = targetSeconds;
-        remainingSeconds = prepTimeSeconds;
-        targetSeconds = prepTimeSeconds;
+        currentPrepSeconds = prepTimeSeconds;
+        // Show prep display
+        if (prepTimerDisplay) {
+            prepTimerDisplay.style.display = 'inline-block';
+            updatePrepDisplay(currentPrepSeconds);
+        }
+        if (prepIndicator) prepIndicator.style.display = 'inline-block';
+        // Main timer display shows original time (static)
         updateDisplay();
         flashColor('#10b981');
         intervalId = setInterval(tickPreparation, 1000);
@@ -391,6 +415,7 @@ function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     startPauseBtn.innerHTML = '▶ Start';
     if (isPreparing) {
         isPreparing = false;
+        if (prepTimerDisplay) prepTimerDisplay.style.display = 'none';
         if (prepIndicator) prepIndicator.style.display = 'none';
     }
     let h = parseInt(hours) || 0;
@@ -415,6 +440,7 @@ function setModeFromRadios() {
         mode = newMode;
         if (isPreparing) {
             isPreparing = false;
+            if (prepTimerDisplay) prepTimerDisplay.style.display = 'none';
             if (prepIndicator) prepIndicator.style.display = 'none';
             stopTimer();
             startPauseBtn.innerHTML = '▶ Start';
@@ -434,6 +460,7 @@ function resetTimer() {
     startPauseBtn.innerHTML = '▶ Start';
     if (isPreparing) {
         isPreparing = false;
+        if (prepTimerDisplay) prepTimerDisplay.style.display = 'none';
         if (prepIndicator) prepIndicator.style.display = 'none';
         remainingSeconds = (mode === "down") ? targetSeconds : 0;
     } else {

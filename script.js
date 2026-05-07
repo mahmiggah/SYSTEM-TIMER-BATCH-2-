@@ -109,26 +109,19 @@ if (prepHoursInput && prepMinutesInput && prepSecondsInput) {
     prepSecondsInput.addEventListener('change', updatePrep);
 }
 
-// Custom label persistence and sync
+// Custom label persistence (only from settings input)
 if (customLabelDiv && customLabelInput) {
     const savedLabel = localStorage.getItem('timerCustomLabel');
     if (savedLabel) {
         customLabelDiv.textContent = savedLabel;
         customLabelInput.value = savedLabel;
+    } else {
+        customLabelDiv.textContent = 'My Timer';
+        customLabelInput.value = 'My Timer';
     }
-    customLabelDiv.addEventListener('blur', () => {
-        const newName = customLabelDiv.textContent;
-        localStorage.setItem('timerCustomLabel', newName);
-        customLabelInput.value = newName;
-    });
-    customLabelDiv.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            customLabelDiv.blur();
-        }
-    });
     customLabelInput.addEventListener('change', () => {
-        const newName = customLabelInput.value;
+        const newName = customLabelInput.value.trim();
+        if (newName === '') return;
         localStorage.setItem('timerCustomLabel', newName);
         customLabelDiv.textContent = newName;
     });

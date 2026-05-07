@@ -10,13 +10,14 @@
     <link rel="icon" href="data:,">
 </head>
 <body>
+<!-- Hamburger menu button (top‑left) -->
+<button id="menuBtn" class="menu-corner" title="Settings">☰</button>
+
 <!-- Floating help button -->
 <button id="helpBtn" class="help-corner" title="User Guide">❓</button>
-   
-    
+
 <div class="app">
-    <!-- Custom editable label -->
-    <div id="customLabel" class="custom-label" contenteditable="true">My Timer</div>
+    <!-- No custom label on main screen -->
 
     <!-- Enlarged timer display -->
     <div class="timer">
@@ -42,24 +43,26 @@
         <div class="light red"></div>
     </div>
 
-    <!-- Main controls -->
+    <!-- Main controls: only Start and Reset -->
     <div class="controls">
         <button id="startPauseBtn">▶ Start</button>
         <button id="resetBtn">🔄 Reset</button>
-        <button id="settingsBtn">⚙️ Settings</button>
     </div>
 </div>
 
-    
 <!-- Fixed footer hotkey note -->
 <div class="hotkey-footer">
     ⌨️ <strong>Hotkeys:</strong> <kbd>Space</kbd> Start/Pause · <kbd>R</kbd> Reset · <kbd>S</kbd> Settings · <kbd>E</kbd> Add Event
 </div>
 
-<!-- Settings Modal -->
+<!-- Settings Modal (now contains custom label input) -->
 <div id="settingsModal" class="modal">
     <div class="modal-content">
         <h3>⚙️ Timer Settings</h3>
+        <div class="settings-field">
+            <label>Timer name:</label>
+            <input type="text" id="customLabelInput" maxlength="30" placeholder="My Timer">
+        </div>
         <div class="settings-buttons">
             <button id="setTimeBtn">⏱️ Set Time</button>
             <div class="mode-radio">
@@ -131,9 +134,9 @@
         <div style="margin-top: 1rem;">
             <p><strong>▶ Start / ⏸</strong> – starts/pauses the timer. If preparation time is set, it runs first.</p>
             <p><strong>🔄 Reset</strong> – resets to last set duration (cancels preparation).</p>
-            <p><strong>⚙️ Settings</strong> – set time, toggle mode, enable continue past zero, set preparation time, and manage traffic light events.</p>
-            <p><strong>🚦 Events</strong> – add times (in seconds) when the traffic light changes colour.</p>
-            <p><strong>✏️ Custom Label</strong> – click the top text to rename your timer.</p>
+            <p><strong>☰ Settings</strong> – set time, toggle mode, enable continue past zero, set preparation time, manage traffic light events, and rename timer.</p>
+            <p><strong>🚦 Events</strong> – add times (in seconds) when the traffic light changes colour (e.g., 15s green, 10s yellow, 5s red).</p>
+            <p><strong>✏️ Timer name</strong> – custom label is now in Settings.</p>
             <p><strong>⌨️ Hotkeys</strong> – <kbd>Space</kbd> Start/Pause, <kbd>R</kbd> Reset, <kbd>S</kbd> Settings, <kbd>E</kbd> Add Event.</p>
         </div>
         <div class="modal-buttons" style="margin-top: 1.5rem;">

@@ -51,13 +51,13 @@ const labelInput = document.getElementById('customLabelInput');
 
 // state vars
 let interval = null;
-let remaining = 0;
-let target = 0;
+let remaining = 0;        // current seconds
+let target = 0;           // set duration
 let mode = "down";
 let halfTriggered = false;
 let finishNotified = false;
 let zeroCrossed = false;
-let events = [];        // each { seconds, color }
+let events = [];
 
 // preparation
 let prepTotal = 0;
@@ -68,7 +68,7 @@ let savedRemaining = 0;
 let savedTarget = 0;
 let continueDesc = false;
 
-// ----- load / save preferences (unchanged) -----
+// ----- load / save preferences -----
 function loadContinue() {
   const saved = localStorage.getItem('continueDescending');
   if (saved !== null) continueDesc = (saved === 'true');
@@ -133,7 +133,7 @@ if (labelDiv && labelInput) {
   });
 }
 
-// ----- helpers (unchanged) -----
+// ----- helpers -----
 function formatTime(sec) {
   const sign = sec < 0 ? '-' : '';
   const abs = Math.abs(sec);
@@ -199,56 +199,32 @@ function toast(msg) {
   setTimeout(() => el.remove(), 3000);
 }
 
-// ----- TRAFFIC LIGHT WITH FALLBACK DEFAULTS -----
+// ----- traffic light (based on time left) -----
 function updateTraffic() {
   greenLight.classList.remove('active');
   yellowLight.classList.remove('active');
   redLight.classList.remove('active');
-
   if (mode === "down" && remaining < 0 && continueDesc) {
     redLight.classList.add('active');
     return;
   }
-
-  let timeLeft = (mode === "down") ? remaining : target - remaining;
-  if (timeLeft < 0) timeLeft = 0;
-
-  // Create a working set of events: start with user-defined events, then add defaults for missing colors
-  let workingEvents = [...events];
-
-  // Check if any yellow event exists
-  const hasYellow = workingEvents.some(ev => ev.color === 'yellow');
-  const hasRed = workingEvents.some(ev => ev.color === 'red');
-  // Default thresholds: yellow at 10 seconds, red at 2 seconds (only if target is > those values)
-  if (!hasYellow && target >= 10) {
-    workingEvents.push({ seconds: 10, color: 'yellow' });
-  }
-  if (!hasRed && target >= 2) {
-    workingEvents.push({ seconds: 2, color: 'red' });
-  }
-
-  // If there is no green event and no yellow/red defaults, we want green on above yellow? Actually we want green to be on when no event is active.
-  // We'll handle green as "default" – i.e., if no event covers the current timeLeft, we turn green on.
-  // Find the active event (largest event seconds that is >= timeLeft)
-  const sorted = [...workingEvents].sort((a,b) => b.seconds - a.seconds);
+  let left = (mode === "down") ? remaining : target - remaining;
+  if (left < 0) left = 0;
+  const sorted = [...events].sort((a,b) => b.seconds - a.seconds);
   let active = null;
   for (let ev of sorted) {
-    if (timeLeft <= ev.seconds) {
+    if (left <= ev.seconds) {
       active = ev;
-      break;
-    }
+    } else break;
   }
   if (active) {
     if (active.color === 'green') greenLight.classList.add('active');
     else if (active.color === 'yellow') yellowLight.classList.add('active');
     else redLight.classList.add('active');
-  } else {
-    // No event covers this range -> default to green (if any time left)
-    if (timeLeft > 0) greenLight.classList.add('active');
   }
 }
 
-// ----- events management (unchanged) -----
+// ----- events management -----
 function renderEvents() {
   if (!eventsListDiv) return;
   eventsListDiv.innerHTML = '';
@@ -306,7 +282,7 @@ confirmEvent.addEventListener('click', () => {
 cancelEvent.addEventListener('click', closeEventModal);
 eventModal.addEventListener('click', (e) => { if (e.target === eventModal) closeEventModal(); });
 
-// ----- timer ticks (unchanged) -----
+// ----- main timer ticks -----
 function tick() {
   if (!interval) return;
   if (mode === "down") {
@@ -353,6 +329,7 @@ function tick() {
   updateTraffic();
 }
 
+// preparation tick
 function prepTick() {
   if (!interval) return;
   if (prepCurrent <= 0) {
@@ -477,7 +454,7 @@ function resetTimer() {
   timerDiv.style.color = '#0f172a';
 }
 
-// ----- modals (unchanged) -----
+// ----- modals -----
 function openSettings() {
   const toCheck = (mode === "down") ? document.querySelector('input[value="down"]') : document.querySelector('input[value="up"]');
   if (toCheck) toCheck.checked = true;

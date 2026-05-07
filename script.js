@@ -347,22 +347,22 @@ function tick() {
     updateTrafficLight();
 }
 
-// Preparation tick (does NOT auto‑start main timer)
+// Preparation tick – ends exactly at 0, no auto‑start
 function tickPreparation() {
     if (intervalId === null) return;
     if (currentPrepSeconds <= 0) {
-        // Preparation finished – stop everything, show main timer ready
+        // Preparation finished – stop everything, hide prep display, restore main timer
         stopTimer();
         startPauseBtn.innerHTML = '▶ Start';
         isPreparing = false;
         if (prepTimerDisplay) prepTimerDisplay.style.display = 'none';
         if (prepIndicator) prepIndicator.style.display = 'none';
-        // Restore original main timer values (they were unchanged during prep)
+        // Restore original main timer values (they were static during prep)
         remainingSeconds = originalMainRemaining;
         targetSeconds = originalTarget;
         updateDisplay();
         updateTrafficLight();
-        // Do NOT start main timer automatically – user must press Start again
+        // Do NOT start main timer – user must press Start again
         return;
     }
     currentPrepSeconds--;
@@ -383,7 +383,7 @@ function startTimer() {
     // If preparation time is set and we are not already preparing, start preparation
     if (prepTimeSeconds > 0 && !isPreparing && !intervalId) {
         isPreparing = true;
-        // Store original main values (they remain static during preparation)
+        // Store original main values (they remain unchanged during prep)
         originalMainRemaining = remainingSeconds;
         originalTarget = targetSeconds;
         currentPrepSeconds = prepTimeSeconds;

@@ -58,9 +58,10 @@ let zeroCrossed = false;
 let events = [];
 
 // Preparation state
-let prepTimeSeconds = 0;        // total preparation duration
+let prepTimeSeconds = 0;        // total preparation duration (from settings)
 let currentPrepSeconds = 0;     // remaining preparation seconds
 let isPreparing = false;
+let preparationUsed = false;     // NEW: to prevent reusing the same preparation after it runs
 let originalMainRemaining = 0;
 let originalTarget = 0;
 let continueDescending = false;
@@ -105,13 +106,15 @@ if (prepHoursInput && prepMinutesInput && prepSecondsInput) {
         if (m > 59) m = 59;
         prepTimeSeconds = h * 3600 + m * 60 + s;
         savePrepTime();
+        // reset preparationUsed flag when settings change
+        preparationUsed = false;
     };
     prepHoursInput.addEventListener('change', updatePrep);
     prepMinutesInput.addEventListener('change', updatePrep);
     prepSecondsInput.addEventListener('change', updatePrep);
 }
 
-// Custom label persistence (only from settings input)
+// Custom label persistence
 if (customLabelDiv && customLabelInput) {
     const savedLabel = localStorage.getItem('timerCustomLabel');
     if (savedLabel) {
@@ -203,7 +206,7 @@ function updateTrafficLight() {
     }
 }
 
-// Events management
+// Events management (unchanged)
 function renderEventsList() {
     if (!eventsListDiv) return;
     eventsListDiv.innerHTML = '';
@@ -347,7 +350,7 @@ function tick() {
     updateTrafficLight();
 }
 
-// Preparation tick – ends exactly at 0, no auto‑start
+// Preparation tick – ends exactly at 0, then clears preparation data so it won't restart
 function tickPreparation() {
     if (intervalId === null) return;
     if (currentPrepSeconds <= 0) {
@@ -355,9 +358,10 @@ function tickPreparation() {
         stopTimer();
         startPauseBtn.innerHTML = '▶ Start';
         isPreparing = false;
+        preparationUsed = true;   // mark preparation as used
         if (prepTimerDisplay) prepTimerDisplay.style.display = 'none';
         if (prepIndicator) prepIndicator.style.display = 'none';
-        // Restore original main timer values (they were static during prep)
+        // Restore original main timer values
         remainingSeconds = originalMainRemaining;
         targetSeconds = originalTarget;
         updateDisplay();
@@ -380,20 +384,17 @@ function startTimer() {
     if (intervalId !== null) return;
     if (mode === "down" && remainingSeconds <= 0 && !continueDescending) return;
 
-    // If preparation time is set and we are not already preparing, start preparation
-    if (prepTimeSeconds > 0 && !isPreparing && !intervalId) {
+    // Only run preparation if not yet used AND preparation time > 0
+    if (prepTimeSeconds > 0 && !isPreparing && !preparationUsed && !intervalId) {
         isPreparing = true;
-        // Store original main values (they remain unchanged during prep)
         originalMainRemaining = remainingSeconds;
         originalTarget = targetSeconds;
         currentPrepSeconds = prepTimeSeconds;
-        // Show preparation display and indicator
         if (prepTimerDisplay) {
             prepTimerDisplay.style.display = 'inline-block';
             updatePrepDisplay(currentPrepSeconds);
         }
         if (prepIndicator) prepIndicator.style.display = 'inline-block';
-        // Main timer continues to show original remaining (static)
         updateDisplay();
         flashColor('#10b981');
         intervalId = setInterval(tickPreparation, 1000);
@@ -401,7 +402,6 @@ function startTimer() {
         return;
     }
 
-    // If preparation already finished or no preparation, start main timer
     startMainTimer();
 }
 function pauseTimer() {
@@ -421,6 +421,8 @@ function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
         if (prepTimerDisplay) prepTimerDisplay.style.display = 'none';
         if (prepIndicator) prepIndicator.style.display = 'none';
     }
+    // Reset preparationUsed flag when setting a new timer so preparation can be used again
+    preparationUsed = false;
     let h = parseInt(hours) || 0;
     let m = parseInt(minutes) || 0;
     let s = parseInt(seconds) || 0;
@@ -448,6 +450,8 @@ function setModeFromRadios() {
             stopTimer();
             startPauseBtn.innerHTML = '▶ Start';
         }
+        // Reset preparationUsed flag when mode changes
+        preparationUsed = false;
         if (mode === "down") remainingSeconds = targetSeconds;
         else remainingSeconds = 0;
         halfTriggered = false;
@@ -461,6 +465,8 @@ function setModeFromRadios() {
 function resetTimer() {
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';
+    // Reset preparationUsed so preparation can run again on next start
+    preparationUsed = false;
     if (isPreparing) {
         isPreparing = false;
         if (prepTimerDisplay) prepTimerDisplay.style.display = 'none';
@@ -478,7 +484,7 @@ function resetTimer() {
     timerDiv.style.color = '#0f172a';
 }
 
-// Modal handlers
+// Modal handlers (unchanged)
 function openSettingsModal() {
     const radioToCheck = mode === "down" ? document.querySelector('input[value="down"]') : document.querySelector('input[value="up"]');
     if (radioToCheck) radioToCheck.checked = true;

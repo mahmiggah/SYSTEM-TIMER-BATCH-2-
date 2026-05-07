@@ -42,6 +42,10 @@ const yellowLight = document.querySelector('.light.yellow');
 const redLight = document.querySelector('.light.red');
 const timerDiv = document.querySelector('.timer');
 
+// Custom label elements
+const customLabelDiv = document.getElementById('customLabel');
+const customLabelInput = document.getElementById('customLabelInput');
+
 // Timer state
 let intervalId = null;
 let remainingSeconds = 0;
@@ -58,9 +62,6 @@ let isPreparing = false;
 let originalMainRemaining = 0;
 let originalTarget = 0;
 let continueDescending = false;
-
-// Custom label input in settings
-const customLabelInput = document.getElementById('customLabelInput');
 
 // ---------- Load / save preferences ----------
 function loadContinuePreference() {
@@ -108,12 +109,28 @@ if (prepHoursInput && prepMinutesInput && prepSecondsInput) {
     prepSecondsInput.addEventListener('change', updatePrep);
 }
 
-// Custom label persistence
-if (customLabelInput) {
+// Custom label persistence and sync
+if (customLabelDiv && customLabelInput) {
     const savedLabel = localStorage.getItem('timerCustomLabel');
-    if (savedLabel) customLabelInput.value = savedLabel;
+    if (savedLabel) {
+        customLabelDiv.textContent = savedLabel;
+        customLabelInput.value = savedLabel;
+    }
+    customLabelDiv.addEventListener('blur', () => {
+        const newName = customLabelDiv.textContent;
+        localStorage.setItem('timerCustomLabel', newName);
+        customLabelInput.value = newName;
+    });
+    customLabelDiv.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            customLabelDiv.blur();
+        }
+    });
     customLabelInput.addEventListener('change', () => {
-        localStorage.setItem('timerCustomLabel', customLabelInput.value);
+        const newName = customLabelInput.value;
+        localStorage.setItem('timerCustomLabel', newName);
+        customLabelDiv.textContent = newName;
     });
 }
 
@@ -143,9 +160,8 @@ function updateDisplay() {
     }
 }
 
-// ---------- Traffic light using threshold logic ----------
+// ---------- Traffic light (threshold logic) ----------
 function updateTrafficLight() {
-    // Turn off all
     greenLight.classList.remove('active');
     yellowLight.classList.remove('active');
     redLight.classList.remove('active');
@@ -155,7 +171,6 @@ function updateTrafficLight() {
         return;
     }
 
-    // Determine time left (same for both modes)
     let timeLeft;
     if (mode === "down") {
         timeLeft = remainingSeconds;
@@ -164,9 +179,7 @@ function updateTrafficLight() {
     }
     if (timeLeft < 0) timeLeft = 0;
 
-    // Sort events descending by time (largest first)
     const sorted = [...events].sort((a,b) => b.timeSeconds - a.timeSeconds);
-    // Find the first event where timeLeft <= event.timeSeconds
     let activeEvent = null;
     for (let ev of sorted) {
         if (timeLeft <= ev.timeSeconds) {
@@ -184,7 +197,7 @@ function updateTrafficLight() {
     }
 }
 
-// Events management (unchanged)
+// Events management
 function renderEventsList() {
     if (!eventsListDiv) return;
     eventsListDiv.innerHTML = '';
@@ -247,7 +260,7 @@ eventConfirm.addEventListener('click', () => {
 eventCancel.addEventListener('click', closeEventModal);
 eventModal.addEventListener('click', (e) => { if (e.target === eventModal) closeEventModal(); });
 
-// Timer core functions (same as before, but now using updateTrafficLight)
+// Timer core
 function flashColor(color) {
     const original = timerDiv.style.color;
     timerDiv.style.color = color;
@@ -281,7 +294,7 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Main timer tick (no preparation)
+// Main timer tick
 function tick() {
     if (intervalId === null) return;
     if (mode === "down") {
@@ -327,8 +340,6 @@ function tick() {
     updateDisplay();
     updateTrafficLight();
 }
-
-// Preparation tick (ends and then starts main timer without re-entering prep)
 function tickPreparation() {
     if (intervalId === null) return;
     if (remainingSeconds <= 0) {
@@ -339,7 +350,6 @@ function tickPreparation() {
         remainingSeconds = originalMainRemaining;
         targetSeconds = originalTarget;
         updateDisplay();
-        // Start main timer directly (bypass preparation check)
         if ((mode === "down" && remainingSeconds > 0) || (mode === "up")) {
             startMainTimer();
         }
@@ -383,7 +393,6 @@ function toggleStartPause() {
     if (intervalId === null) startTimer();
     else pauseTimer();
 }
-
 function setTimerFromHoursMinutesSeconds(hours, minutes, seconds) {
     stopTimer();
     startPauseBtn.innerHTML = '▶ Start';

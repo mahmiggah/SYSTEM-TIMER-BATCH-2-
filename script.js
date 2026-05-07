@@ -347,22 +347,22 @@ function tick() {
     updateTrafficLight();
 }
 
-// Preparation tick (separate display)
+// Preparation tick (does NOT auto‑start main timer)
 function tickPreparation() {
     if (intervalId === null) return;
     if (currentPrepSeconds <= 0) {
-        // Preparation finished
+        // Preparation finished – stop everything, show main timer ready
         stopTimer();
         startPauseBtn.innerHTML = '▶ Start';
         isPreparing = false;
         if (prepTimerDisplay) prepTimerDisplay.style.display = 'none';
         if (prepIndicator) prepIndicator.style.display = 'none';
-        // Restore main timer values (they were never changed)
+        // Restore original main timer values (they were unchanged during prep)
         remainingSeconds = originalMainRemaining;
         targetSeconds = originalTarget;
         updateDisplay();
-        // Start main timer automatically
-        startMainTimer();
+        updateTrafficLight();
+        // Do NOT start main timer automatically – user must press Start again
         return;
     }
     currentPrepSeconds--;
@@ -380,25 +380,28 @@ function startTimer() {
     if (intervalId !== null) return;
     if (mode === "down" && remainingSeconds <= 0 && !continueDescending) return;
 
+    // If preparation time is set and we are not already preparing, start preparation
     if (prepTimeSeconds > 0 && !isPreparing && !intervalId) {
         isPreparing = true;
-        // Store original main values
+        // Store original main values (they remain static during preparation)
         originalMainRemaining = remainingSeconds;
         originalTarget = targetSeconds;
         currentPrepSeconds = prepTimeSeconds;
-        // Show prep display
+        // Show preparation display and indicator
         if (prepTimerDisplay) {
             prepTimerDisplay.style.display = 'inline-block';
             updatePrepDisplay(currentPrepSeconds);
         }
         if (prepIndicator) prepIndicator.style.display = 'inline-block';
-        // Main timer display shows original time (static)
+        // Main timer continues to show original remaining (static)
         updateDisplay();
         flashColor('#10b981');
         intervalId = setInterval(tickPreparation, 1000);
         startPauseBtn.innerHTML = '⏸ Pause';
         return;
     }
+
+    // If preparation already finished or no preparation, start main timer
     startMainTimer();
 }
 function pauseTimer() {

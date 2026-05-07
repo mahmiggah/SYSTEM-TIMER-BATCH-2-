@@ -14,10 +14,13 @@
 <button id="helpBtn" class="help-corner" title="User Guide">❓</button>
 
 <div class="app">
-    <!-- Static label (not contenteditable) -->
+    <!-- Custom static label (editable only in Settings) -->
     <div id="customLabel" class="custom-label">My Timer</div>
+
+    <!-- Small preparation timer display -->
     <div id="prepTimerDisplay" class="prep-timer-display" style="display: none;">⏳ Prep: 00:00:00</div>
 
+    <!-- Enlarged timer display -->
     <div class="timer">
         <span class="timer-hours">00</span>
         <span class="timer-colon">:</span>
@@ -31,21 +34,24 @@
         <span class="unit">SECONDS</span>
     </div>
 
+    <!-- Preparation indicator (text) -->
     <div id="prepIndicator" class="prep-indicator" style="display: none;">⏳ Preparing...</div>
 
+    <!-- Traffic light -->
     <div class="traffic-light">
         <div class="light green active"></div>
         <div class="light yellow"></div>
         <div class="light red"></div>
     </div>
 
-  <div class="controls">
-    <button id="startPauseBtn">▶</button>
-    <button id="resetBtn">🔄</button>
-    <button id="menuBtn" class="menu-corner" title="Settings">☰</button>
-</div>
+    <!-- Main controls: only Start/Pause and Reset (icons) -->
+    <div class="controls">
+        <button id="startPauseBtn" title="Start / Pause">▶</button>
+        <button id="resetBtn" title="Reset">⟳</button>
+    </div>
 </div>
 
+<!-- Fixed footer hotkey note -->
 <div class="hotkey-footer">
     ⌨️ <strong>Hotkeys:</strong> <kbd>Space</kbd> Start/Pause · <kbd>R</kbd> Reset · <kbd>S</kbd> Settings · <kbd>E</kbd> Add Event
 </div>
@@ -127,12 +133,13 @@
     <div class="modal-content" style="max-width: 500px; text-align: left;">
         <h3 style="text-align: center;">📘 Timer Guide</h3>
         <div style="margin-top: 1rem;">
-            <p><strong>▶ Start / ⏸</strong> – starts/pauses the timer. If preparation time is set, it runs first.</p>
-            <p><strong>🔄 Reset</strong> – resets to last set duration (cancels preparation).</p>
-            <p><strong>☰ Settings</strong> – set time, toggle mode, enable continue past zero, set preparation time, manage traffic light events, and rename timer.</p>
-            <p><strong>🚦 Events</strong> – add times (in seconds) when the traffic light changes colour (e.g., 15s green, 10s yellow, 5s red).</p>
-            <p><strong>✏️ Timer name</strong> – can be changed in Settings.</p>
-            <p><strong>⌨️ Hotkeys</strong> – <kbd>Space</kbd> Start/Pause, <kbd>R</kbd> Reset, <kbd>S</kbd> Settings, <kbd>E</kbd> Add Event.</p>
+            <p><strong>▶ / ⏸</strong> – Start / Pause (spacebar).</p>
+            <p><strong>⟳</strong> – Reset (R key).</p>
+            <p><strong>☰</strong> – Settings (S key).</p>
+            <p><strong>❓</strong> – Help.</p>
+            <p><strong>🚦 Events</strong> – add times (seconds) when traffic light changes colour.</p>
+            <p><strong>⏰ Preparation time</strong> – counts down first; after it ends, press Start again for main timer.</p>
+            <p><strong>✏️ Timer name</strong> – change in Settings.</p>
         </div>
         <div class="modal-buttons" style="margin-top: 1.5rem;">
             <button id="closeHelpBtn" style="background:#0f172a; color:white;">Got it</button>

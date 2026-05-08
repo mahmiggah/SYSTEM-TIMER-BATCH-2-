@@ -199,7 +199,7 @@ function toast(msg) {
   setTimeout(() => el.remove(), 3000);
 }
 
-// ----- TRAFFIC LIGHT (fixed: ascending sort, allows any color at 0) -----
+// ----- TRAFFIC LIGHT (green only when its event is active; no fallback) -----
 function updateTraffic() {
   greenLight.classList.remove('active');
   yellowLight.classList.remove('active');
@@ -221,7 +221,7 @@ function updateTraffic() {
   if (!hasUserYellow && target >= 10) workingEvents.push({ seconds: 10, color: 'yellow' });
   if (!hasUserRed && target >= 2) workingEvents.push({ seconds: 2, color: 'red' });
 
-
+  // Sort ASCENDING so smallest threshold is checked first
   const sorted = [...workingEvents].sort((a, b) => a.seconds - b.seconds);
 
   let active = null;
@@ -236,12 +236,11 @@ function updateTraffic() {
     if (active.color === 'green') greenLight.classList.add('active');
     else if (active.color === 'yellow') yellowLight.classList.add('active');
     else redLight.classList.add('active');
-  } else {
-    if (timeLeft > 0) greenLight.classList.add('active');
   }
+  // 👁️ No fallback – all lights stay off if no event is active
 }
 
-// ----- events management (fixed addEvent: any colour at 0) -----
+// ----- events management -----
 function renderEvents() {
   if (!eventsListDiv) return;
   eventsListDiv.innerHTML = '';
@@ -267,8 +266,6 @@ function addEvent(hrs, mins, secs, color) {
   let h = parseInt(hrs)||0, m = parseInt(mins)||0, s = parseInt(secs)||0;
   if (s > 59) s = 59;
   const total = h*3600 + m*60 + s;
-
-
   if (total < 0) return false;
 
   if (target === 0) {

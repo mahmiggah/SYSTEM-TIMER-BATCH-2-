@@ -215,19 +215,34 @@ function updateTraffic() {
 
   let workingEvents = [...events];
 
-  // Check for user-defined yellow and red events
   const hasUserYellow = workingEvents.some(ev => ev.color === 'yellow');
-  const hasUserRed = workingEvents.some(ev => ev.color === 'red');
+  const hasUserRed    = workingEvents.some(ev => ev.color === 'red');
 
-  // Add default yellow (10s) only if no user yellow and target >= 10
-  if (!hasUserYellow && target >= 10) {
-    workingEvents.push({ seconds: 10, color: 'yellow' });
-  }
-  // Add default red (2s) only if no user red and target >= 2
-  if (!hasUserRed && target >= 2) {
-    workingEvents.push({ seconds: 2, color: 'red' });
+  if (!hasUserYellow && target >= 10) workingEvents.push({ seconds: 10, color: 'yellow' });
+  if (!hasUserRed    && target >= 2)  workingEvents.push({ seconds: 2,  color: 'red'    });
+
+
+  const sorted = [...workingEvents].sort((a, b) => a.seconds - b.seconds);
+
+
+  let active = null;
+  for (let ev of sorted) {
+    // picks the SMALLEST threshold that timeLeft has entered
+    if (timeLeft <= ev.seconds) {
+
+      active = ev;
+      break;
+    }
   }
 
+  if (active) {
+    if      (active.color === 'green')  greenLight.classList.add('active');
+    else if (active.color === 'yellow') yellowLight.classList.add('active');
+    else                                  redLight.classList.add('active');
+  } else {
+    if (timeLeft > 0) greenLight.classList.add('active');
+  }
+}
   // Find active event (largest event seconds that is >= timeLeft)
   const sorted = [...workingEvents].sort((a,b) => b.seconds - a.seconds);
   let active = null;
@@ -273,6 +288,9 @@ function addEvent(hrs, mins, secs, color) {
   let h = parseInt(hrs)||0, m = parseInt(mins)||0, s = parseInt(secs)||0;
   if (s > 59) s = 59;
   const total = h*3600 + m*60 + s;
+   
+ if (total < 0) return false;
+  
   // Allow total = 0 only for red events
   if (total === 0 && color !== 'red') return false;
   if (target === 0) {

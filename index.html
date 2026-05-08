@@ -151,12 +151,19 @@
 
   <script src="script.js"></script>
   <script>
-    // register service worker for PWA (offline)
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(console.warn);
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(registration => {
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // New worker is waiting, reload the page
+            window.location.reload();
+          }
+        });
       });
-    }
-  </script>
+    });
+  }
+</script>
 </body>
 </html>

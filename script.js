@@ -51,13 +51,13 @@ const labelInput = document.getElementById('customLabelInput');
 
 // state vars
 let interval = null;
-let remaining = 0;        // current seconds
-let target = 0;           // set duration
+let remaining = 0;
+let target = 0;
 let mode = "down";
 let halfTriggered = false;
 let finishNotified = false;
 let zeroCrossed = false;
-let events = [];
+let events = [];        // each { seconds, color }
 
 // preparation
 let prepTotal = 0;
@@ -199,32 +199,55 @@ function toast(msg) {
   setTimeout(() => el.remove(), 3000);
 }
 
-// ----- traffic light (based on time left) -----
+// ----- TRAFFIC LIGHT WITH FALLBACK DEFAULTS (allows red at 0) -----
 function updateTraffic() {
   greenLight.classList.remove('active');
   yellowLight.classList.remove('active');
   redLight.classList.remove('active');
+
   if (mode === "down" && remaining < 0 && continueDesc) {
     redLight.classList.add('active');
     return;
   }
-  let left = (mode === "down") ? remaining : target - remaining;
-  if (left < 0) left = 0;
-  const sorted = [...events].sort((a,b) => b.seconds - a.seconds);
+
+  let timeLeft = (mode === "down") ? remaining : target - remaining;
+  if (timeLeft < 0) timeLeft = 0;
+
+  let workingEvents = [...events];
+
+  // Check for user-defined yellow and red events
+  const hasUserYellow = workingEvents.some(ev => ev.color === 'yellow');
+  const hasUserRed = workingEvents.some(ev => ev.color === 'red');
+
+  // Add default yellow (10s) only if no user yellow and target >= 10
+  if (!hasUserYellow && target >= 10) {
+    workingEvents.push({ seconds: 10, color: 'yellow' });
+  }
+  // Add default red (2s) only if no user red and target >= 2
+  if (!hasUserRed && target >= 2) {
+    workingEvents.push({ seconds: 2, color: 'red' });
+  }
+
+  // Find active event (largest event seconds that is >= timeLeft)
+  const sorted = [...workingEvents].sort((a,b) => b.seconds - a.seconds);
   let active = null;
   for (let ev of sorted) {
-    if (left <= ev.seconds) {
+    if (timeLeft <= ev.seconds) {
       active = ev;
-    } else break;
+      break;
+    }
   }
   if (active) {
     if (active.color === 'green') greenLight.classList.add('active');
     else if (active.color === 'yellow') yellowLight.classList.add('active');
     else redLight.classList.add('active');
+  } else {
+    // No event covers this range -> default green (if any time left)
+    if (timeLeft > 0) greenLight.classList.add('active');
   }
 }
 
-// ----- events management -----
+// ----- events management (allow zero seconds for red) -----
 function renderEvents() {
   if (!eventsListDiv) return;
   eventsListDiv.innerHTML = '';
@@ -250,7 +273,8 @@ function addEvent(hrs, mins, secs, color) {
   let h = parseInt(hrs)||0, m = parseInt(mins)||0, s = parseInt(secs)||0;
   if (s > 59) s = 59;
   const total = h*3600 + m*60 + s;
-  if (total === 0) return false;
+  // Allow total = 0 only for red events
+  if (total === 0 && color !== 'red') return false;
   if (target === 0) {
     alert('Set timer time first.');
     return false;
@@ -282,7 +306,7 @@ confirmEvent.addEventListener('click', () => {
 cancelEvent.addEventListener('click', closeEventModal);
 eventModal.addEventListener('click', (e) => { if (e.target === eventModal) closeEventModal(); });
 
-// ----- main timer ticks -----
+// ----- timer ticks (unchanged) -----
 function tick() {
   if (!interval) return;
   if (mode === "down") {
@@ -329,7 +353,6 @@ function tick() {
   updateTraffic();
 }
 
-// preparation tick
 function prepTick() {
   if (!interval) return;
   if (prepCurrent <= 0) {
@@ -454,7 +477,7 @@ function resetTimer() {
   timerDiv.style.color = '#0f172a';
 }
 
-// ----- modals -----
+// ----- modals (unchanged) -----
 function openSettings() {
   const toCheck = (mode === "down") ? document.querySelector('input[value="down"]') : document.querySelector('input[value="up"]');
   if (toCheck) toCheck.checked = true;

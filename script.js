@@ -205,23 +205,19 @@ function updateTraffic() {
   yellowLight.classList.remove('active');
   redLight.classList.remove('active');
 
-
   if (mode === "down" && remaining < 0 && continueDesc) {
     redLight.classList.add('active');
     return;
   }
 
-  
   let value = (mode === "down") ? remaining : target - remaining;
   if (value < 0) value = 0;
 
- 
   let workingEvents = [...events];
   const hasUserGreen = workingEvents.some(ev => ev.color === 'green');
   const hasUserYellow = workingEvents.some(ev => ev.color === 'yellow');
   const hasUserRed = workingEvents.some(ev => ev.color === 'red');
 
- 
   if (!hasUserGreen && target > 0) {
     workingEvents.push({ seconds: target, color: 'green' });
   }
@@ -232,13 +228,24 @@ function updateTraffic() {
     workingEvents.push({ seconds: 2, color: 'red' });
   }
 
- 
-  const sorted = [...workingEvents].sort((a, b) => a.seconds - b.seconds);
-  let active = null;
+  // For ascending mode, we invert the meaning of event seconds
+  // so that the user's 5s event (which they think as elapsed) becomes a 15s remaining event.
+  // That way, the sequence becomes green at start etc.
+  let sortedEvents;
+  if (mode === "up") {
+    // Transform each event's seconds to (target - seconds) for comparison
+    sortedEvents = workingEvents.map(ev => ({
+      ...ev,
+      effectiveSec: target - ev.seconds
+    })).sort((a, b) => a.effectiveSec - b.effectiveSec);
+  } else {
+    sortedEvents = [...workingEvents].sort((a, b) => a.seconds - b.seconds);
+  }
 
- 
-  for (let ev of sorted) {
-    if (value <= ev.seconds) {
+  let active = null;
+  for (let ev of sortedEvents) {
+    let compareValue = (mode === "up") ? ev.effectiveSec : ev.seconds;
+    if (value <= compareValue) {
       active = ev;
       break;
     }
@@ -250,7 +257,6 @@ function updateTraffic() {
     else redLight.classList.add('active');
   }
 }
-
 // ----- events management -----
 function renderEvents() {
   if (!eventsListDiv) return;

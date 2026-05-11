@@ -205,7 +205,7 @@ function updateTraffic() {
   yellowLight.classList.remove('active');
   redLight.classList.remove('active');
 
- 
+
   if (mode === "down" && remaining < 0 && continueDesc) {
     redLight.classList.add('active');
     return;
@@ -217,15 +217,24 @@ function updateTraffic() {
 
  
   let workingEvents = [...events];
+  const hasUserGreen = workingEvents.some(ev => ev.color === 'green');
   const hasUserYellow = workingEvents.some(ev => ev.color === 'yellow');
   const hasUserRed = workingEvents.some(ev => ev.color === 'red');
 
  
-  if (!hasUserYellow && target >= 10) workingEvents.push({ seconds: 10, color: 'yellow' });
-  if (!hasUserRed && target >= 2) workingEvents.push({ seconds: 2, color: 'red' });
+  if (!hasUserGreen && target > 0) {
+    workingEvents.push({ seconds: target, color: 'green' });
+  }
+  if (!hasUserYellow && target >= 10) {
+    workingEvents.push({ seconds: 10, color: 'yellow' });
+  }
+  if (!hasUserRed && target >= 2) {
+    workingEvents.push({ seconds: 2, color: 'red' });
+  }
 
  
   const sorted = [...workingEvents].sort((a, b) => a.seconds - b.seconds);
+  let active = null;
 
  
   for (let ev of sorted) {
@@ -240,7 +249,6 @@ function updateTraffic() {
     else if (active.color === 'yellow') yellowLight.classList.add('active');
     else redLight.classList.add('active');
   }
-
 }
 
 // ----- events management -----

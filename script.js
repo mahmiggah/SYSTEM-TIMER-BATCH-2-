@@ -205,30 +205,44 @@ function updateTraffic() {
   yellowLight.classList.remove('active');
   redLight.classList.remove('active');
 
+ 
   if (mode === "down" && remaining < 0 && continueDesc) {
     redLight.classList.add('active');
     return;
   }
 
-  let timeLeft = (mode === "down") ? remaining : target - remaining;
-  if (timeLeft < 0) timeLeft = 0;
+ 
+  let current;
+  if (mode === "down") {
+    current = remaining;                 
+  } else {
+    current = remaining;                
+  }
+  if (current < 0) current = 0;
 
   let workingEvents = [...events];
 
-  const hasUserYellow = workingEvents.some(ev => ev.color === 'yellow');
-  const hasUserRed = workingEvents.some(ev => ev.color === 'red');
 
-  if (!hasUserYellow && target >= 10) workingEvents.push({ seconds: 10, color: 'yellow' });
-  if (!hasUserRed && target >= 2) workingEvents.push({ seconds: 2, color: 'red' });
-
-  // Sort ASCENDING so smallest threshold is checked first
+  if (mode === "down") {
+    const hasUserYellow = workingEvents.some(ev => ev.color === 'yellow');
+    const hasUserRed = workingEvents.some(ev => ev.color === 'red');
+    if (!hasUserYellow && target >= 10) workingEvents.push({ seconds: 10, color: 'yellow' });
+    if (!hasUserRed && target >= 2) workingEvents.push({ seconds: 2, color: 'red' });
+  }
   const sorted = [...workingEvents].sort((a, b) => a.seconds - b.seconds);
 
   let active = null;
   for (let ev of sorted) {
-    if (timeLeft <= ev.seconds) {
-      active = ev;
-      break;
+      if (current <= ev.seconds) {
+        active = ev;
+        break;
+      }
+    } else { 
+      if (current >= ev.seconds) {
+        active = ev; 
+      } else {
+        break;
+      }
     }
   }
 
@@ -237,7 +251,14 @@ function updateTraffic() {
     else if (active.color === 'yellow') yellowLight.classList.add('active');
     else redLight.classList.add('active');
   }
-  // 👁️ No fallback – all lights stay off if no event is active
+}
+
+  if (active) {
+    if (active.color === 'green') greenLight.classList.add('active');
+    else if (active.color === 'yellow') yellowLight.classList.add('active');
+    else redLight.classList.add('active');
+  }
+
 }
 
 // ----- events management -----

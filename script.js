@@ -211,47 +211,29 @@ function updateTraffic() {
     return;
   }
 
+  
+  let value = (mode === "down") ? remaining : target - remaining;
+  if (value < 0) value = 0;
+
  
-  let current;
-  if (mode === "down") {
-    current = remaining;                 
-  } else {
-    current = remaining;                
-  }
-  if (current < 0) current = 0;
-
   let workingEvents = [...events];
+  const hasUserYellow = workingEvents.some(ev => ev.color === 'yellow');
+  const hasUserRed = workingEvents.some(ev => ev.color === 'red');
 
+ 
+  if (!hasUserYellow && target >= 10) workingEvents.push({ seconds: 10, color: 'yellow' });
+  if (!hasUserRed && target >= 2) workingEvents.push({ seconds: 2, color: 'red' });
 
-  if (mode === "down") {
-    const hasUserYellow = workingEvents.some(ev => ev.color === 'yellow');
-    const hasUserRed = workingEvents.some(ev => ev.color === 'red');
-    if (!hasUserYellow && target >= 10) workingEvents.push({ seconds: 10, color: 'yellow' });
-    if (!hasUserRed && target >= 2) workingEvents.push({ seconds: 2, color: 'red' });
-  }
+ 
   const sorted = [...workingEvents].sort((a, b) => a.seconds - b.seconds);
 
-  let active = null;
+ 
   for (let ev of sorted) {
-      if (current <= ev.seconds) {
-        active = ev;
-        break;
-      }
-    } else { 
-      if (current >= ev.seconds) {
-        active = ev; 
-      } else {
-        break;
-      }
+    if (value <= ev.seconds) {
+      active = ev;
+      break;
     }
   }
-
-  if (active) {
-    if (active.color === 'green') greenLight.classList.add('active');
-    else if (active.color === 'yellow') yellowLight.classList.add('active');
-    else redLight.classList.add('active');
-  }
-}
 
   if (active) {
     if (active.color === 'green') greenLight.classList.add('active');

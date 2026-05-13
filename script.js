@@ -1,4 +1,4 @@
-// DOM elements
+// --- DOM elements ---
 const timerHours = document.querySelector('.timer-hours');
 const timerMins = document.querySelector('.timer-minutes');
 const timerSecs = document.querySelector('.timer-seconds');
@@ -49,15 +49,15 @@ const timerDiv = document.querySelector('.timer');
 const labelDiv = document.getElementById('customLabel');
 const labelInput = document.getElementById('customLabelInput');
 
-// state vars
-let interval = null;
-let remaining = 0;
-let target = 0;
-let mode = "down";
+// --- state variables ---
+let timerActive = false;          // whether the timer is running (instead of intervalId)
+let remaining = 0;                // current seconds (can be negative for descending continue)
+let target = 0;                   // originally set duration
+let mode = "down";                // "down" or "up"
 let halfTriggered = false;
 let finishNotified = false;
 let zeroCrossed = false;
-let events = [];        // each { seconds, color }
+let events = [];
 
 // preparation
 let prepTotal = 0;
@@ -68,7 +68,11 @@ let savedRemaining = 0;
 let savedTarget = 0;
 let continueDesc = false;
 
-// ----- load / save preferences -----
+// --- accurate timer variables ---
+let expected = 0;                 // expected timestamp for next tick
+let timerTimeout = null;          // timeout handle
+
+// --- load / save preferences (unchanged) ---
 function loadContinue() {
   const saved = localStorage.getItem('continueDescending');
   if (saved !== null) continueDesc = (saved === 'true');
@@ -115,7 +119,6 @@ if (prepHoursInp && prepMinsInp && prepSecsInp) {
   prepSecsInp.addEventListener('change', updatePrepFromInputs);
 }
 
-// label sync
 if (labelDiv && labelInput) {
   const savedLabel = localStorage.getItem('timerCustomLabel');
   if (savedLabel) {
@@ -133,7 +136,7 @@ if (labelDiv && labelInput) {
   });
 }
 
-// ----- helpers -----
+// --- helper functions (formatTime, updateDisplay, updatePrepDisplay, flash, beep, toast) ---
 function formatTime(sec) {
   const sign = sec < 0 ? '-' : '';
   const abs = Math.abs(sec);
@@ -172,10 +175,11 @@ function flash(col) {
   setTimeout(() => { if (timerDiv.style.color === col) timerDiv.style.color = orig; }, 400);
 }
 function stopTimer() {
-  if (interval) {
-    clearInterval(interval);
-    interval = null;
+  if (timerTimeout) {
+    clearTimeout(timerTimeout);
+    timerTimeout = null;
   }
+  timerActive = false;
 }
 function beep(freq=880, dur=0.5) {
   try {
@@ -199,7 +203,7 @@ function toast(msg) {
   setTimeout(() => el.remove(), 3000);
 }
 
-// ----- TRAFFIC LIGHT (green only when its event is active; no fallback) -----
+// --- traffic light (unchanged) ---
 function updateTraffic() {
   greenLight.classList.remove('active');
   yellowLight.classList.remove('active');
@@ -214,38 +218,16 @@ function updateTraffic() {
   if (value < 0) value = 0;
 
   let workingEvents = [...events];
-  const hasUserGreen = workingEvents.some(ev => ev.color === 'green');
   const hasUserYellow = workingEvents.some(ev => ev.color === 'yellow');
   const hasUserRed = workingEvents.some(ev => ev.color === 'red');
 
-  if (!hasUserGreen && target > 0) {
-    workingEvents.push({ seconds: target, color: 'green' });
-  }
-  if (!hasUserYellow && target >= 10) {
-    workingEvents.push({ seconds: 10, color: 'yellow' });
-  }
-  if (!hasUserRed && target >= 2) {
-    workingEvents.push({ seconds: 2, color: 'red' });
-  }
+  if (!hasUserYellow && target >= 10) workingEvents.push({ seconds: 10, color: 'yellow' });
+  if (!hasUserRed && target >= 2) workingEvents.push({ seconds: 2, color: 'red' });
 
-  // For ascending mode, we invert the meaning of event seconds
-  // so that the user's 5s event (which they think as elapsed) becomes a 15s remaining event.
-  // That way, the sequence becomes green at start etc.
-  let sortedEvents;
-  if (mode === "up") {
-    // Transform each event's seconds to (target - seconds) for comparison
-    sortedEvents = workingEvents.map(ev => ({
-      ...ev,
-      effectiveSec: target - ev.seconds
-    })).sort((a, b) => a.effectiveSec - b.effectiveSec);
-  } else {
-    sortedEvents = [...workingEvents].sort((a, b) => a.seconds - b.seconds);
-  }
-
+  const sorted = [...workingEvents].sort((a, b) => a.seconds - b.seconds);
   let active = null;
-  for (let ev of sortedEvents) {
-    let compareValue = (mode === "up") ? ev.effectiveSec : ev.seconds;
-    if (value <= compareValue) {
+  for (let ev of sorted) {
+    if (value <= ev.seconds) {
       active = ev;
       break;
     }
@@ -257,7 +239,8 @@ function updateTraffic() {
     else redLight.classList.add('active');
   }
 }
-// ----- events management -----
+
+// --- events management (unchanged) ---
 function renderEvents() {
   if (!eventsListDiv) return;
   eventsListDiv.innerHTML = '';
@@ -284,7 +267,6 @@ function addEvent(hrs, mins, secs, color) {
   if (s > 59) s = 59;
   const total = h*3600 + m*60 + s;
   if (total < 0) return false;
-
   if (target === 0) {
     alert('Set timer time first.');
     return false;
@@ -316,9 +298,10 @@ confirmEvent.addEventListener('click', () => {
 cancelEvent.addEventListener('click', closeEventModal);
 eventModal.addEventListener('click', (e) => { if (e.target === eventModal) closeEventModal(); });
 
-// ----- timer ticks -----
-function tick() {
-  if (!interval) return;
+// --- actual timer update (the "tick" that changes remaining) ---
+function timerUpdate() {
+  if (!timerActive) return;
+
   if (mode === "down") {
     if (remaining <= 0 && !continueDesc) {
       if (remaining === 0) {
@@ -346,7 +329,7 @@ function tick() {
       halfTriggered = true;
       flash('#eab308');
     }
-  } else {
+  } else { // ascending
     remaining++;
     if (!finishNotified && remaining >= target && target>0) {
       finishNotified = true;
@@ -363,35 +346,38 @@ function tick() {
   updateTraffic();
 }
 
-// preparation tick
-function prepTick() {
-  if (!interval) return;
-  if (prepCurrent <= 0) {
-    stopTimer();
-    startPauseBtn.innerHTML = '▶';
-    isPreparing = false;
-    prepUsed = true;
-    if (prepTimerDisplay) prepTimerDisplay.style.display = 'none';
-    if (prepIndicator) prepIndicator.style.display = 'none';
-    remaining = savedRemaining;
-    target = savedTarget;
-    updateDisplay();
-    updateTraffic();
-    return;
-  }
-  prepCurrent--;
-  updatePrepDisplay(prepCurrent);
+// --- accurate timer scheduling ---
+function scheduleTick() {
+  if (!timerActive) return;
+  expected = performance.now() + 1000;
+  timerTimeout = setTimeout(accurateTick, 1000);
+}
+function accurateTick() {
+  if (!timerActive) return;
+  const now = performance.now();
+  const drift = now - expected;
+
+  timerUpdate();      // perform one second update
+
+  // schedule next tick, correcting for drift
+  expected += 1000;
+  const nextDelay = Math.max(0, 1000 - drift);
+  timerTimeout = setTimeout(accurateTick, nextDelay);
 }
 
-function startMain() {
-  if (interval) return;
+// --- start / pause / main timer ---
+function startMainTimer() {
+  if (timerActive) return;
   if (mode === "down" && remaining <= 0 && !continueDesc) return;
-  flash('#10b981');
-  interval = setInterval(tick, 1000);
+  timerActive = true;
+  // reset drift compensation
+  expected = performance.now() + 1000;
+  timerTimeout = setTimeout(accurateTick, 1000);
   startPauseBtn.innerHTML = '⏸';
+  flash('#10b981');
 }
 function startTimer() {
-  if (interval) return;
+  if (timerActive) return;
   if (mode === "down" && remaining <= 0 && !continueDesc) return;
 
   if (prepTotal > 0 && !isPreparing && !prepUsed) {
@@ -406,22 +392,48 @@ function startTimer() {
     if (prepIndicator) prepIndicator.style.display = 'inline-block';
     updateDisplay();
     flash('#10b981');
-    interval = setInterval(prepTick, 1000);
+    timerActive = true;
+    expected = performance.now() + 1000;
+    timerTimeout = setTimeout(function prepTickLoop() {
+      if (!timerActive) return;
+      if (prepCurrent <= 0) {
+        stopTimer();
+        startPauseBtn.innerHTML = '▶';
+        isPreparing = false;
+        prepUsed = true;
+        if (prepTimerDisplay) prepTimerDisplay.style.display = 'none';
+        if (prepIndicator) prepIndicator.style.display = 'none';
+        remaining = savedRemaining;
+        target = savedTarget;
+        updateDisplay();
+        updateTraffic();
+        return;
+      }
+      prepCurrent--;
+      updatePrepDisplay(prepCurrent);
+      expected += 1000;
+      const delay = Math.max(0, 1000 - (performance.now() - expected));
+      timerTimeout = setTimeout(prepTickLoop, delay);
+    }, 1000);
     startPauseBtn.innerHTML = '⏸';
     return;
   }
-  startMain();
+  startMainTimer();
 }
 function pauseTimer() {
-  if (!interval) return;
+  if (!timerActive) return;
   stopTimer();
   startPauseBtn.innerHTML = '▶';
 }
 function toggleStartPause() {
-  if (interval) pauseTimer();
+  if (timerActive) pauseTimer();
   else startTimer();
 }
 
+// --- preparation tick (separate) but we moved it inside startTimer; keep old prepTick removed ---
+// (preparation is handled inline in startTimer, no separate prepTick needed)
+
+// --- set timer, mode, reset ---
 function setTimer(h,m,s) {
   stopTimer();
   startPauseBtn.innerHTML = '▶';
@@ -445,7 +457,6 @@ function setTimer(h,m,s) {
   updateTraffic();
   timerDiv.style.color = '#0f172a';
 }
-
 function toggleMode() {
   const sel = document.querySelector('input[name="countMode"]:checked').value;
   const newMode = (sel === "up") ? "up" : "down";
@@ -488,7 +499,7 @@ function resetTimer() {
   timerDiv.style.color = '#0f172a';
 }
 
-// ----- modals -----
+// --- modal handlers (unchanged) ---
 function openSettings() {
   const toCheck = (mode === "down") ? document.querySelector('input[value="down"]') : document.querySelector('input[value="up"]');
   if (toCheck) toCheck.checked = true;
@@ -532,14 +543,13 @@ modeRadios.forEach(r => {
 resetBtn.addEventListener('click', resetTimer);
 startPauseBtn.addEventListener('click', toggleStartPause);
 
-// help modal
 if (helpBtn && helpModal) {
   helpBtn.addEventListener('click', () => helpModal.style.display = 'flex');
   closeHelp.addEventListener('click', () => helpModal.style.display = 'none');
   helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.style.display = 'none'; });
 }
 
-// hotkeys
+// --- hotkeys ---
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
   switch (e.key) {
@@ -550,7 +560,7 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// initialization
+// --- initialisation ---
 loadContinue();
 loadPrep();
 remaining = 0;

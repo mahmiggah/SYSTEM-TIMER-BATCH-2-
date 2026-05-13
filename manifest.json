@@ -1,6 +1,6 @@
 {
-  "name": "SYSTEM TIMER BATCH 2",
-  "short_name": "Timer BATCH 2",
+  "name": "SYSTEM-IMER-BATCH-2",
+  "short_name": "TIMER-BATCH-2",
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#0a0f2a",

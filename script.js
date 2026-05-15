@@ -209,11 +209,13 @@ function updateTraffic() {
   yellowLight.classList.remove('active');
   redLight.classList.remove('active');
 
+  // Special case: continuing past zero in descending mode
   if (mode === "down" && remaining < 0 && continueDesc) {
     redLight.classList.add('active');
     return;
   }
 
+  // For both modes, compute the value that events will be compared against
   let value = (mode === "down") ? remaining : target - remaining;
   if (value < 0) value = 0;
 
@@ -221,25 +223,24 @@ function updateTraffic() {
   const hasUserYellow = workingEvents.some(ev => ev.color === 'yellow');
   const hasUserRed = workingEvents.some(ev => ev.color === 'red');
 
+  // Add default events only if the user hasn't defined them
   if (!hasUserYellow && target >= 10) workingEvents.push({ seconds: 10, color: 'yellow' });
   if (!hasUserRed && target >= 2) workingEvents.push({ seconds: 2, color: 'red' });
 
-  // Sort events: for descending, we want the largest time to be considered "first"
-  const sorted = [...workingEvents].sort((a, b) => (mode === "down" ? b.seconds - a.seconds : a.seconds - b.seconds));
+  // ***** FIX: For ascending mode, swap the meaning of green and red *****
+  if (mode === "up") {
+    workingEvents = workingEvents.map(ev => ({
+      ...ev,
+      color: ev.color === 'green' ? 'red' : (ev.color === 'red' ? 'green' : ev.color)
+    }));
+  }
 
+  const sorted = [...workingEvents].sort((a, b) => a.seconds - b.seconds);
   let active = null;
   for (let ev of sorted) {
-    if (mode === "down") {
-      // For descending, check if the event's time is >= current remaining (i.e., event not yet passed)
-      if (ev.seconds >= value) {
-        active = ev;
-        break;
-      }
-    } else {
-      if (value <= ev.seconds) {
-        active = ev;
-        break;
-      }
+    if (value <= ev.seconds) {
+      active = ev;
+      break;
     }
   }
 

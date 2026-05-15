@@ -224,12 +224,22 @@ function updateTraffic() {
   if (!hasUserYellow && target >= 10) workingEvents.push({ seconds: 10, color: 'yellow' });
   if (!hasUserRed && target >= 2) workingEvents.push({ seconds: 2, color: 'red' });
 
-  const sorted = [...workingEvents].sort((a, b) => a.seconds - b.seconds);
+  // Sort events: for descending, we want the largest time to be considered "first"
+  const sorted = [...workingEvents].sort((a, b) => (mode === "down" ? b.seconds - a.seconds : a.seconds - b.seconds));
+
   let active = null;
   for (let ev of sorted) {
-    if (value <= ev.seconds) {
-      active = ev;
-      break;
+    if (mode === "down") {
+      // For descending, check if the event's time is >= current remaining (i.e., event not yet passed)
+      if (ev.seconds >= value) {
+        active = ev;
+        break;
+      }
+    } else {
+      if (value <= ev.seconds) {
+        active = ev;
+        break;
+      }
     }
   }
 
@@ -239,7 +249,6 @@ function updateTraffic() {
     else redLight.classList.add('active');
   }
 }
-
 // --- events management (unchanged) ---
 function renderEvents() {
   if (!eventsListDiv) return;

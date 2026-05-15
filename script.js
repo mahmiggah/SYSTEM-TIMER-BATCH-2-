@@ -209,38 +209,42 @@ function updateTraffic() {
   yellowLight.classList.remove('active');
   redLight.classList.remove('active');
 
-  // Special case: continuing past zero in descending mode
   if (mode === "down" && remaining < 0 && continueDesc) {
     redLight.classList.add('active');
     return;
   }
 
-  // For both modes, compute the value that events will be compared against
-  let value = (mode === "down") ? remaining : target - remaining;
+  let value;
+  if (mode === "down") {
+    value = remaining;                     // time left
+  } else {
+    value = remaining;                     // ascending: remaining IS elapsed time
+  }
   if (value < 0) value = 0;
 
   let workingEvents = [...events];
+  const hasUserGreen = workingEvents.some(ev => ev.color === 'green');
   const hasUserYellow = workingEvents.some(ev => ev.color === 'yellow');
   const hasUserRed = workingEvents.some(ev => ev.color === 'red');
 
-  // Add default events only if the user hasn't defined them
-  if (!hasUserYellow && target >= 10) workingEvents.push({ seconds: 10, color: 'yellow' });
-  if (!hasUserRed && target >= 2) workingEvents.push({ seconds: 2, color: 'red' });
-
-  // ***** FIX: For ascending mode, swap the meaning of green and red *****
-  if (mode === "up") {
-    workingEvents = workingEvents.map(ev => ({
-      ...ev,
-      color: ev.color === 'green' ? 'red' : (ev.color === 'red' ? 'green' : ev.color)
-    }));
+  // Add default events only if not defined
+  if (mode === "down") {
+    if (!hasUserGreen && target > 0) workingEvents.push({ seconds: target, color: 'green' });
+    if (!hasUserYellow && target >= 10) workingEvents.push({ seconds: 10, color: 'yellow' });
+    if (!hasUserRed && target >= 2) workingEvents.push({ seconds: 2, color: 'red' });
+  } else {
+    // Ascending: default green at 0 seconds (so green is on from start if no green event)
+    if (!hasUserGreen) workingEvents.push({ seconds: 0, color: 'green' });
+    if (!hasUserYellow && target >= 10) workingEvents.push({ seconds: 10, color: 'yellow' });
+    if (!hasUserRed && target >= 2) workingEvents.push({ seconds: target - 2, color: 'red' });
   }
 
+  // Find the active event: the largest event time ≤ current value
   const sorted = [...workingEvents].sort((a, b) => a.seconds - b.seconds);
   let active = null;
   for (let ev of sorted) {
-    if (value <= ev.seconds) {
+    if (ev.seconds <= value) {
       active = ev;
-      break;
     }
   }
 
